@@ -1,0 +1,8 @@
+__pycache__
+*.pyc
+*.har
+*.mhtml
+.git
+.venv
+storage/*
+!storage/cookies.json
