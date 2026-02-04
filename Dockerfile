@@ -22,4 +22,4 @@ EXPOSE 8000
 
 # Create storage directory at runtime (in case volume mount hasn't created it yet)
 # and run the application
-CMD ["sh", "-c", "mkdir -p /storage && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
+CMD ["sh", "-c", "mkdir -p /storage && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
