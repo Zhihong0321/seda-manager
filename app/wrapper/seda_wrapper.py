@@ -25,6 +25,7 @@ class SEDAClient:
     
     def __init__(self, cookies_path: str = COOKIES_PATH):
         self.cookies_path = cookies_path
+        self.base_url = SEDA_BASE_URL
         self.session = requests.Session()
         self.session.headers.update({'User-Agent': USER_AGENT})
         self._initialize_session()

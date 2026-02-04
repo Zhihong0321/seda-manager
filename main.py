@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from app.api.v1 import profiles
+from app.api.v1 import profiles, applications
 from app.dashboard import routes as dashboard
 from app.wrapper.seda_wrapper import SEDASessionExpired, SEDAException
 from app.core.config import APP_NAME, logger
@@ -36,6 +36,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Include Routers
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(profiles.router, prefix="/api/v1/profiles", tags=["Profiles"])
+app.include_router(applications.router, prefix="/api/v1/applications", tags=["Applications"])
 
 @app.get("/api/v1/health")
 async def health_check():
