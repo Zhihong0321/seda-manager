@@ -51,6 +51,21 @@ async def get_profile_details(profile_id: str, client: SEDAClient = Depends(get_
     # Note: Logic currently assumes individuals as per research.
     return client.fetch_individual_details(profile_id)
 
+@router.post("/", response_model=dict)
+async def create_profile(
+    payload: ProfileUpdate,
+    client: SEDAClient = Depends(get_client)
+):
+    """Create a new individual profile."""
+    result = client.create_individual_profile(payload.model_dump())
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Failed to create profile"))
+    return {
+        "message": "Profile created successfully",
+        "profile_id": result["profile_id"],
+        "redirect_url": result["redirect_url"]
+    }
+
 @router.put("/{profile_id}")
 async def update_profile(
     profile_id: str, 

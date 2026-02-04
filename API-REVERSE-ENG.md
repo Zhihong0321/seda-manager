@@ -42,8 +42,17 @@ To mimic a valid browser request, the following headers are required:
   - `phone`, `mobile`: Contact numbers
   - **Emergency/Secondary Contact:** `contact_salutation`, `contact_name`, `contact_mykad_passport`, `contact_relationship`, `contact_citizenship`, `contact_email`, `contact_mobile`, `contact_phone`.
 
-### 2.3 Profile Update
-- **URL:** Same as GET
+### 2.3 Create Individual Profile
+- **URL:** `https://atap.seda.gov.my/profiles/individuals`
+- **Method:** `POST`
+- **Required Fields:** `_token` (sent twice), and all form fields from section 2.2
+- **Response:** `302 Found` redirect to either:
+  - Edit page with new profile ID: `/profiles/individuals/{id}/edit`
+  - List page: `/profiles/individuals` (if ID not in URL)
+- **Critical Pattern:** Must send `_token` twice in the POST body to mimic browser behavior.
+
+### 2.4 Profile Update
+- **URL:** Same as GET (edit endpoint)
 - **Method:** `POST` (with `_method: PUT` in form data)
 - **Required Fields:** `_token` (CSRF), `_method`, and all form fields above.
 - **Critical Pattern:** Must send `_token` twice in the POST body to mimic browser behavior.
@@ -60,7 +69,6 @@ To mimic a valid browser request, the following headers are required:
 ---
 
 ## 4. Pending Investigation
-- [ ] Create Individual Profile (POST structure)
 - [ ] Create Company Profile (POST structure)
 - [ ] Submit Application (Multi-step form logic?)
 - [ ] File Upload Handling (Mechanism for attachments)

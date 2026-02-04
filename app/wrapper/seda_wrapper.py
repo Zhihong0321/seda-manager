@@ -122,6 +122,63 @@ class SEDAClient:
                 
         return details
 
+    def create_individual_profile(self, data: Dict) -> Dict:
+        """Creates a new individual profile."""
+        url = f"{SEDA_BASE_URL}/profiles/individuals"
+        
+        try:
+            token = self._fetch_csrf_token(url)
+            
+            # Replicate browser behavior: Double CSRF token (Laravel pattern)
+            payload = [
+                ('_token', token),
+                ('_token', token)
+            ]
+            
+            for key, value in data.items():
+                if key not in ['_method', '_token']:
+                    payload.append((key, value))
+            
+            logger.info("Submitting new individual profile")
+            response = self.session.post(url, data=payload, headers={'Referer': url})
+            self._validate_response(response)
+            
+            # Check for redirect to extract the new profile ID
+            if response.status_code == 302:
+                location = response.headers.get('Location', '')
+                import re
+                match = re.search(r'/profiles/individuals/(\d+)/edit', location)
+                if match:
+                    profile_id = match.group(1)
+                    logger.info(f"Profile created successfully with ID: {profile_id}")
+                    return {
+                        "success": True,
+                        "profile_id": profile_id,
+                        "redirect_url": location
+                    }
+                elif '/profiles/individuals' in location:
+                    # Redirected to list page - profile created but ID not in URL
+                    logger.info("Profile created successfully (ID not in redirect URL)")
+                    return {
+                        "success": True,
+                        "profile_id": None,
+                        "redirect_url": location,
+                        "message": "Profile created. Check the profiles list for the new entry."
+                    }
+            
+            logger.error(f"Unexpected response status: {response.status_code}")
+            return {
+                "success": False,
+                "error": f"Unexpected response: {response.status_code}"
+            }
+
+        except Exception as e:
+            logger.error(f"Profile creation failed: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
     def update_individual_profile(self, profile_id: str, data: Dict) -> bool:
         """Performs a PUT update for an individual profile."""
         url = f"{SEDA_BASE_URL}/profiles/individuals/{profile_id}/edit"
