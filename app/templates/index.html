@@ -159,16 +159,21 @@
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
                 <button id="testProfilesBtn" class="btn btn-primary btn-sm" onclick="testListProfiles()">
-                    <span id="testProfilesText">📋 Test List Profiles</span>
+                    <span id="testProfilesText">📋 List All Profiles</span>
                     <span id="testProfilesSpinner" class="spinner-border spinner-border-sm" style="display: none;"></span>
                 </button>
+                <button id="searchProfilesBtn" class="btn btn-outline-primary btn-sm" onclick="searchProfiles()">
+                    <span id="searchProfilesText">🔍 Search</span>
+                    <span id="searchProfilesSpinner" class="spinner-border spinner-border-sm" style="display: none;"></span>
+                </button>
+                <input type="text" id="profileSearchInput" class="form-control form-control-sm" placeholder="Search name..." style="max-width: 150px;">
                 <div class="d-flex align-items-center gap-2">
                     <label class="small text-muted mb-0">Page:</label>
-                    <select id="profilePage" class="form-select form-select-sm" style="width: 70px;" onchange="testListProfiles()">
+                    <select id="profilePage" class="form-select form-select-sm" style="width: 70px;" onchange="profileSearchMode ? searchProfiles() : testListProfiles()">
                         <option value="0">1</option>
                     </select>
                     <label class="small text-muted mb-0">Limit:</label>
-                    <select id="profileLimit" class="form-select form-select-sm" style="width: 80px;" onchange="testListProfiles()">
+                    <select id="profileLimit" class="form-select form-select-sm" style="width: 80px;" onchange="profileSearchMode ? searchProfiles() : testListProfiles()">
                         <option value="10">10</option>
                         <option value="25" selected>25</option>
                         <option value="50">50</option>
@@ -358,6 +363,8 @@ let profileState = {
     total: 0,
     currentPage: 1
 };
+let profileSearchMode = false;
+let profileSearchTerm = '';
 
 // Test List Profiles Function
 function testListProfiles() {
@@ -367,6 +374,11 @@ function testListProfiles() {
     const resultDiv = document.getElementById('profilesResult');
     const errorDiv = document.getElementById('profilesError');
     const tableBody = document.getElementById('profilesTableBody');
+    
+    // Reset search mode
+    profileSearchMode = false;
+    profileSearchTerm = '';
+    document.getElementById('profileSearchInput').value = '';
     
     // Get pagination values
     const pageSelect = document.getElementById('profilePage');
@@ -457,8 +469,113 @@ function changeProfilePage(direction) {
     
     if (newPage >= 0) {
         pageSelect.value = newPage;
-        testListProfiles();
+        if (profileSearchMode) {
+            searchProfiles();
+        } else {
+            testListProfiles();
+        }
     }
+}
+
+// Search Profiles Function
+function searchProfiles() {
+    const btn = document.getElementById('searchProfilesBtn');
+    const btnText = document.getElementById('searchProfilesText');
+    const btnSpinner = document.getElementById('searchProfilesSpinner');
+    const resultDiv = document.getElementById('profilesResult');
+    const errorDiv = document.getElementById('profilesError');
+    const tableBody = document.getElementById('profilesTableBody');
+    const searchInput = document.getElementById('profileSearchInput');
+    
+    const searchTerm = searchInput.value.trim();
+    if (!searchTerm) {
+        // If empty, switch back to list mode
+        profileSearchMode = false;
+        testListProfiles();
+        return;
+    }
+    
+    profileSearchMode = true;
+    profileSearchTerm = searchTerm;
+    
+    // Get pagination values
+    const pageSelect = document.getElementById('profilePage');
+    const limitSelect = document.getElementById('profileLimit');
+    profileState.limit = parseInt(limitSelect.value);
+    profileState.currentPage = parseInt(pageSelect.value) + 1;
+    profileState.skip = parseInt(pageSelect.value) * profileState.limit;
+    
+    // Reset UI
+    resultDiv.style.display = 'none';
+    errorDiv.style.display = 'none';
+    tableBody.innerHTML = '';
+    
+    // Show loading
+    btn.disabled = true;
+    btnText.textContent = 'Searching...';
+    btnSpinner.style.display = 'inline-block';
+    
+    fetch(`/api/v1/profiles/search/?name=${encodeURIComponent(searchTerm)}&skip=${profileState.skip}&limit=${profileState.limit}`)
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.detail || 'Search failed'); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            profileState.total = data.total;
+            
+            // Show success
+            resultDiv.style.display = 'block';
+            document.getElementById('profilesCount').textContent = `${data.total} Matches for "${searchTerm}"`;
+            document.getElementById('profilesStatus').innerHTML = '<span class="text-success">✓ Success</span>';
+            
+            // Update pagination controls
+            const totalPages = Math.ceil(data.total / profileState.limit);
+            document.getElementById('profilePageInfo').textContent = `Page ${profileState.currentPage} of ${totalPages}`;
+            
+            // Update prev/next buttons
+            document.getElementById('prevProfilePage').disabled = profileState.skip === 0;
+            document.getElementById('nextProfilePage').disabled = (profileState.skip + data.profiles.length) >= data.total;
+            
+            // Update page selector
+            const pageSelector = document.getElementById('profilePage');
+            const currentSelected = pageSelector.value;
+            pageSelector.innerHTML = '';
+            for (let i = 0; i < totalPages; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i + 1;
+                pageSelector.appendChild(option);
+            }
+            pageSelector.value = Math.min(currentSelected, totalPages - 1);
+            
+            // Populate table
+            data.profiles.forEach((profile, index) => {
+                const rowNumber = profileState.skip + index + 1;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${rowNumber}</td>
+                    <td><span class="badge bg-secondary">${escapeHtml(profile.type)}</span></td>
+                    <td><strong>${escapeHtml(profile.name)}</strong></td>
+                    <td><code>${escapeHtml(profile.registration_number)}</code></td>
+                    <td>${escapeHtml(profile.category)}</td>
+                    <td>
+                        <a href="${escapeHtml(profile.url)}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            errorDiv.style.display = 'block';
+            document.getElementById('profilesErrorMsg').textContent = error.message;
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btnText.textContent = '🔍 Search';
+            btnSpinner.style.display = 'none';
+        });
 }
 
 // Test Search Applications Function
