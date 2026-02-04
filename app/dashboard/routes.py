@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from app.core.config import COOKIES_PATH, logger, get_storage_health, get_db_connection, STORAGE_DIR
+from app.core.config import COOKIES_PATH, logger, get_storage_health, get_db_connection, STORAGE_DIR, SEDA_BASE_URL
 from app.wrapper.seda_wrapper import SEDAClient, SEDASessionExpired
 import shutil
 import os
@@ -95,7 +95,7 @@ async def api_handshake():
         try:
             client = SEDAClient()
             # Make a lightweight request to verify session
-            response = client.session.get(f"{client.session.headers.get('Host', 'https://atap.seda.gov.my')}/profiles", 
+            response = client.session.get(f"{SEDA_BASE_URL}/profiles", 
                                          timeout=10,
                                          allow_redirects=True)
             
