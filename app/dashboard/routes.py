@@ -34,7 +34,7 @@ async def upload_cookies(file: UploadFile = File(...)):
     return RedirectResponse(url="/", status_code=303)
 
 
-@router.get("/api/handshake")
+@router.get("/api/handshake/")
 async def api_handshake():
     """
     Comprehensive health check that verifies:
@@ -162,7 +162,7 @@ async def api_handshake():
     return JSONResponse(content=result)
 
 
-@router.get("/api/test-list-profiles")
+@router.get("/api/test-list-profiles/")
 async def test_list_profiles():
     """
     Test endpoint to fetch and display profiles from SEDA.
