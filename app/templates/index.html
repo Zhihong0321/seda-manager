@@ -22,6 +22,14 @@
         .badge-storage { font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; }
         .badge-railway { background-color: #a855f7; color: white; }
         .badge-local { background-color: #6c757d; color: white; }
+        .handshake-card { background: #f8f9fa; border-radius: 8px; padding: 20px; margin-top: 15px; }
+        .handshake-result { display: none; }
+        .handshake-result.show { display: block; }
+        .check-item { display: flex; align-items: center; padding: 10px; margin: 5px 0; border-radius: 6px; background: white; }
+        .check-icon { font-size: 1.2rem; margin-right: 10px; }
+        .spinner-border-sm { width: 1rem; height: 1rem; }
+        .btn-verify { background-color: #0d6efd; color: white; border: none; }
+        .btn-verify:hover { background-color: #0b5ed7; }
     </style>
 </head>
 <body>
@@ -81,6 +89,56 @@
                         </span>
                     </div>
                 </div>
+                
+                <!-- API Handshake Section -->
+                <p class="label mt-4">API Handshake</p>
+                <div class="handshake-card">
+                    <p class="text-muted small mb-3">Verify cookie validity and test SEDA connection.</p>
+                    <button id="verifyBtn" class="btn btn-verify btn-sm w-100" onclick="runHandshake()">
+                        <span id="btnText">🔍 Verify Connection</span>
+                        <span id="btnSpinner" class="spinner-border spinner-border-sm" style="display: none;"></span>
+                    </button>
+                    
+                    <div id="handshakeResult" class="handshake-result mt-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong id="overallStatus">Checking...</strong>
+                            <span id="overallBadge" class="badge"></span>
+                        </div>
+                        <p id="overallMessage" class="text-muted small mb-3"></p>
+                        
+                        <div id="checksContainer">
+                            <!-- Storage Check -->
+                            <div class="check-item">
+                                <span id="storageIcon" class="check-icon">⏳</span>
+                                <div class="flex-grow-1">
+                                    <strong class="small">Storage</strong>
+                                    <p id="storageMsg" class="text-muted small mb-0">Pending...</p>
+                                </div>
+                            </div>
+                            <!-- Database Check -->
+                            <div class="check-item">
+                                <span id="dbIcon" class="check-icon">⏳</span>
+                                <div class="flex-grow-1">
+                                    <strong class="small">Database</strong>
+                                    <p id="dbMsg" class="text-muted small mb-0">Pending...</p>
+                                </div>
+                            </div>
+                            <!-- SEDA Cookies Check -->
+                            <div class="check-item">
+                                <span id="sedaIcon" class="check-icon">⏳</span>
+                                <div class="flex-grow-1">
+                                    <strong class="small">SEDA Session</strong>
+                                    <p id="sedaMsg" class="text-muted small mb-0">Pending...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 pt-3 border-top">
+                            <a href="/api/handshake" target="_blank" class="text-decoration-none small">View JSON Response →</a>
+                        </div>
+                    </div>
+                </div>
+                
                 <p class="label mt-4">Quick Links</p>
                 <ul class="list-unstyled">
                     <li class="mb-2"><a href="/docs" class="text-decoration-none text-dark">📖 API Documentation (Swagger)</a></li>
@@ -97,6 +155,86 @@
         <p class="text-muted small">Waiting for logs...</p>
     </div>
 </div>
+
+<script>
+function runHandshake() {
+    const btn = document.getElementById('verifyBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const result = document.getElementById('handshakeResult');
+    
+    // Show loading state
+    btn.disabled = true;
+    btnText.textContent = 'Verifying...';
+    btnSpinner.style.display = 'inline-block';
+    result.classList.add('show');
+    
+    // Reset icons
+    document.getElementById('storageIcon').textContent = '⏳';
+    document.getElementById('dbIcon').textContent = '⏳';
+    document.getElementById('sedaIcon').textContent = '⏳';
+    document.getElementById('storageMsg').textContent = 'Checking...';
+    document.getElementById('dbMsg').textContent = 'Checking...';
+    document.getElementById('sedaMsg').textContent = 'Checking...';
+    
+    // Call API
+    fetch('/api/handshake')
+        .then(response => response.json())
+        .then(data => {
+            // Update overall status
+            const overallBadge = document.getElementById('overallBadge');
+            const overallStatus = document.getElementById('overallStatus');
+            
+            overallStatus.textContent = data.overall_status.toUpperCase();
+            document.getElementById('overallMessage').textContent = data.message;
+            
+            // Set badge color
+            overallBadge.className = 'badge ' + 
+                (data.overall_status === 'healthy' ? 'bg-success' : 
+                 data.overall_status === 'warning' ? 'bg-warning text-dark' : 'bg-danger');
+            overallBadge.textContent = data.overall_status;
+            
+            // Update storage check
+            const storage = data.checks.storage;
+            document.getElementById('storageIcon').textContent = 
+                storage.status === 'healthy' ? '✅' : 
+                storage.status === 'warning' ? '⚠️' : '❌';
+            document.getElementById('storageMsg').textContent = 
+                `Path: ${storage.path} | Writable: ${storage.writable ? 'Yes' : 'No'} | Cookies: ${storage.cookies_exist ? 'Yes' : 'No'}`;
+            
+            // Update database check
+            const db = data.checks.database;
+            document.getElementById('dbIcon').textContent = 
+                db.status === 'healthy' ? '✅' : 
+                db.status === 'warning' ? '⚠️' : '❌';
+            document.getElementById('dbMsg').textContent = db.message;
+            
+            // Update SEDA check
+            const seda = data.checks.seda_cookies;
+            document.getElementById('sedaIcon').textContent = 
+                seda.status === 'healthy' ? '✅' : 
+                seda.status === 'warning' ? '⚠️' : '❌';
+            document.getElementById('sedaMsg').textContent = seda.message;
+        })
+        .catch(error => {
+            document.getElementById('overallStatus').textContent = 'ERROR';
+            document.getElementById('overallMessage').textContent = 'Failed to run handshake: ' + error.message;
+            document.getElementById('overallBadge').className = 'badge bg-danger';
+            document.getElementById('overallBadge').textContent = 'error';
+        })
+        .finally(() => {
+            // Reset button
+            btn.disabled = false;
+            btnText.textContent = '🔍 Verify Connection';
+            btnSpinner.style.display = 'none';
+        });
+}
+
+// Auto-run handshake if ?handshake=1 is in URL
+if (window.location.search.includes('handshake=1')) {
+    document.addEventListener('DOMContentLoaded', runHandshake);
+}
+</script>
 
 </body>
 </html>
