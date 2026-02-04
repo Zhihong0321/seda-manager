@@ -6,6 +6,7 @@ from app.wrapper.seda_wrapper import SEDAClient, SEDASessionExpired
 import shutil
 import os
 import requests
+from datetime import datetime
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -43,7 +44,7 @@ async def api_handshake():
     """
     result = {
         "overall_status": "unknown",
-        "timestamp": __import__('datetime').datetime.now().isoformat(),
+        "timestamp": datetime.now().isoformat(),
         "checks": {
             "storage": {},
             "database": {},
