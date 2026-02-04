@@ -36,34 +36,39 @@ async def list_profiles(
     }
 
 @router.get("/search")
-async def search_profile(name: str, client: SEDAClient = Depends(get_client)):
+async def search_profile(
+    name: str,
+    skip: int = Query(0, ge=0, description="Number of profiles to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Number of profiles to return"),
+    client: SEDAClient = Depends(get_client)
+):
     """
-    Search for a profile by exact name.
-    Success: Returns the UID if exactly one match is found.
-    Failure: 404 if not found, 409 if multiple matches exist.
+    Search for profiles by name (partial match, case-insensitive).
+    
+    - **name**: Search keyword (partial match)
+    - **skip**: Number of profiles to skip (for pagination)
+    - **limit**: Maximum number of profiles to return
     """
     profiles = client.fetch_profile_list()
-    # Case-insensitive exact match
-    matches = [p for p in profiles if p['name'].strip().upper() == name.strip().upper()]
+    
+    # Case-insensitive partial match
+    matches = [p for p in profiles if name.strip().upper() in p['name'].strip().upper()]
+    
+    total = len(matches)
     
     if not matches:
-        raise HTTPException(status_code=404, detail=f"Profile with name '{name}' not found.")
+        raise HTTPException(status_code=404, detail=f"No profiles found matching '{name}'.")
     
-    if len(matches) > 1:
-        raise HTTPException(
-            status_code=409, 
-            detail={
-                "error": "Ambiguous match",
-                "message": f"Found {len(matches)} profiles with the name '{name}'. Human check required.",
-                "matches": matches
-            }
-        )
+    # Apply pagination
+    paginated_matches = matches[skip:skip + limit]
     
     return {
-        "id": matches[0]['id'],
-        "type": matches[0]['type'],
-        "name": matches[0]['name'],
-        "registration_number": matches[0]['registration_number']
+        "success": True,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "search_term": name,
+        "profiles": paginated_matches
     }
 
 @router.get("/{profile_id}")
