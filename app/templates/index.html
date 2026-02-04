@@ -10,8 +10,18 @@
         .header { border-bottom: 1px solid #dee2e6; padding: 20px 0; background: white; margin-bottom: 0; }
         .section { border-bottom: 1px solid #dee2e6; padding: 40px 0; background: white; }
         .no-margin { margin: 0 !important; }
-        .status-dot { height: 10px; width: 10px; background-color: #28a745; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .status-dot.healthy { background-color: #28a745; }
+        .status-dot.warning { background-color: #ffc107; }
+        .status-dot.error { background-color: #dc3545; }
+        .status-dot.unknown { background-color: #6c757d; }
         .label { font-weight: 600; color: #6c757d; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .storage-card { background: #f8f9fa; border-radius: 8px; padding: 15px; }
+        .storage-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #dee2e6; }
+        .storage-item:last-child { border-bottom: none; }
+        .badge-storage { font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; }
+        .badge-railway { background-color: #a855f7; color: white; }
+        .badge-local { background-color: #6c757d; color: white; }
     </style>
 </head>
 <body>
@@ -21,7 +31,8 @@
         <div class="d-flex justify-content-between align-items-center">
             <h4 class="no-margin">eATAP Solar Manager</h4>
             <div>
-                <span class="status-dot"></span> <span class="label">System Status: {{ status }}</span>
+                <span class="status-dot {% if storage.status == 'healthy' %}healthy{% elif storage.status == 'warning' %}warning{% elif storage.status == 'error' %}error{% else %}unknown{% endif %}"></span> 
+                <span class="label">System Status: {{ status }}</span>
             </div>
         </div>
     </div>
@@ -40,10 +51,40 @@
                 </form>
             </div>
             <div class="col-md-6">
-                <p class="label">Quick Links</p>
+                <p class="label">Storage Health</p>
+                <div class="storage-card">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <strong>
+                            <span class="status-dot {% if storage.status == 'healthy' %}healthy{% elif storage.status == 'warning' %}warning{% elif storage.status == 'error' %}error{% else %}unknown{% endif %}"></span>
+                            {{ storage.status.upper() }}
+                        </strong>
+                        <span class="badge-storage {% if storage.is_railway_volume %}badge-railway{% else %}badge-local{% endif %}">
+                            {{ "Railway Volume" if storage.is_railway_volume else "Local Storage" }}
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-2">{{ storage.message }}</p>
+                    <div class="storage-item">
+                        <span class="text-muted small">Path:</span>
+                        <code class="small">{{ storage.path }}</code>
+                    </div>
+                    <div class="storage-item">
+                        <span class="text-muted small">Writable:</span>
+                        <span class="small {% if storage.writable %}text-success{% else %}text-danger{% endif %}">
+                            {{ "✓ Yes" if storage.writable else "✗ No" }}
+                        </span>
+                    </div>
+                    <div class="storage-item">
+                        <span class="text-muted small">Cookies File:</span>
+                        <span class="small {% if storage.cookies_exist %}text-success{% else %}text-warning{% endif %}">
+                            {{ "✓ Found" if storage.cookies_exist else "✗ Not Found" }}
+                            {% if storage.cookies_exist %}({{ (storage.cookies_size / 1024) | round(1) }} KB){% endif %}
+                        </span>
+                    </div>
+                </div>
+                <p class="label mt-4">Quick Links</p>
                 <ul class="list-unstyled">
                     <li class="mb-2"><a href="/docs" class="text-decoration-none text-dark">📖 API Documentation (Swagger)</a></li>
-                    <li class="mb-2"><a href="/api/v1/status" class="text-decoration-none text-dark">⚡ System Health Check</a></li>
+                    <li class="mb-2"><a href="/api/v1/health" class="text-decoration-none text-dark">⚡ System Health Check</a></li>
                 </ul>
             </div>
         </div>

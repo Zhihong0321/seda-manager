@@ -20,6 +20,6 @@ ENV PYTHONUNBUFFERED=1
 # Expose the port FastAPI will run on
 EXPOSE 8000
 
-# Run the application
-# We use --host 0.0.0.0 and dynamic port for Railway
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Create storage directory at runtime (in case volume mount hasn't created it yet)
+# and run the application
+CMD ["sh", "-c", "mkdir -p /storage && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"

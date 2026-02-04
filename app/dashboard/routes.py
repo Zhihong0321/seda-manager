@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.core.config import COOKIES_PATH, logger
+from app.core.config import COOKIES_PATH, logger, get_storage_health
 import shutil
 import os
 
@@ -11,9 +11,11 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     status = "Active" if os.path.exists(COOKIES_PATH) else "No Session"
+    storage_health = get_storage_health()
     return templates.TemplateResponse("index.html", {
         "request": request, 
-        "status": status
+        "status": status,
+        "storage": storage_health
     })
 
 @router.post("/upload-cookies")
