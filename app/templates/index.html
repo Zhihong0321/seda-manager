@@ -151,6 +151,48 @@
 
 <div class="section">
     <div class="container">
+        <p class="label">Test API Endpoints</p>
+        
+        <!-- Test List Profiles Section -->
+        <div class="mb-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <button id="testProfilesBtn" class="btn btn-primary btn-sm" onclick="testListProfiles()">
+                    <span id="testProfilesText">📋 Test List Profiles</span>
+                    <span id="testProfilesSpinner" class="spinner-border spinner-border-sm" style="display: none;"></span>
+                </button>
+                <a href="/api/test-list-profiles" target="_blank" class="text-decoration-none small">View Raw JSON →</a>
+            </div>
+            
+            <div id="profilesResult" style="display: none;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span id="profilesCount" class="badge bg-info"></span>
+                    <span id="profilesStatus" class="small"></span>
+                </div>
+                
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm table-striped table-hover">
+                        <thead class="table-dark sticky-top">
+                            <tr>
+                                <th>#</th>
+                                <th>Type</th>
+                                <th>Name</th>
+                                <th>Reg. Number</th>
+                                <th>Category</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="profilesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="profilesError" class="alert alert-danger" style="display: none;">
+                <strong>Error:</strong> <span id="profilesErrorMsg"></span>
+            </div>
+        </div>
+        
+        <hr class="my-4">
         <p class="label">Recent Activity</p>
         <p class="text-muted small">Waiting for logs...</p>
     </div>
@@ -233,6 +275,74 @@ function runHandshake() {
 // Auto-run handshake if ?handshake=1 is in URL
 if (window.location.search.includes('handshake=1')) {
     document.addEventListener('DOMContentLoaded', runHandshake);
+}
+
+// Test List Profiles Function
+function testListProfiles() {
+    const btn = document.getElementById('testProfilesBtn');
+    const btnText = document.getElementById('testProfilesText');
+    const btnSpinner = document.getElementById('testProfilesSpinner');
+    const resultDiv = document.getElementById('profilesResult');
+    const errorDiv = document.getElementById('profilesError');
+    const tableBody = document.getElementById('profilesTableBody');
+    
+    // Reset UI
+    resultDiv.style.display = 'none';
+    errorDiv.style.display = 'none';
+    tableBody.innerHTML = '';
+    
+    // Show loading
+    btn.disabled = true;
+    btnText.textContent = 'Fetching...';
+    btnSpinner.style.display = 'inline-block';
+    
+    fetch('/api/test-list-profiles')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success
+                resultDiv.style.display = 'block';
+                document.getElementById('profilesCount').textContent = `${data.count} Profiles`;
+                document.getElementById('profilesStatus').innerHTML = '<span class="text-success">✓ Success</span>';
+                
+                // Populate table
+                data.profiles.forEach((profile, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td><span class="badge bg-secondary">${profile.type}</span></td>
+                        <td><strong>${escapeHtml(profile.name)}</strong></td>
+                        <td><code>${escapeHtml(profile.registration_number)}</code></td>
+                        <td>${escapeHtml(profile.category)}</td>
+                        <td>
+                            <a href="${escapeHtml(profile.url)}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                View
+                            </a>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                throw new Error(data.message || 'Unknown error');
+            }
+        })
+        .catch(error => {
+            errorDiv.style.display = 'block';
+            document.getElementById('profilesErrorMsg').textContent = error.message;
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btnText.textContent = '📋 Test List Profiles';
+            btnSpinner.style.display = 'none';
+        });
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 </script>
 

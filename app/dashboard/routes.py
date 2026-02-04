@@ -160,3 +160,39 @@ async def api_handshake():
         result["message"] = "Some systems may have issues. Review details below."
     
     return JSONResponse(content=result)
+
+
+@router.get("/api/test-list-profiles")
+async def test_list_profiles():
+    """
+    Test endpoint to fetch and display profiles from SEDA.
+    Returns the full profile list for dashboard testing.
+    """
+    try:
+        client = SEDAClient()
+        profiles = client.fetch_profile_list()
+        
+        return JSONResponse(content={
+            "success": True,
+            "count": len(profiles),
+            "profiles": profiles,
+            "message": f"Successfully fetched {len(profiles)} profiles"
+        })
+    except SEDASessionExpired as e:
+        return JSONResponse(
+            status_code=401,
+            content={
+                "success": False,
+                "error": "Session expired",
+                "message": str(e)
+            }
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": "Failed to fetch profiles",
+                "message": str(e)
+            }
+        )
