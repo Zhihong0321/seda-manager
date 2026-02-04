@@ -157,12 +157,25 @@
         
         <!-- Test List Profiles Section -->
         <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
                 <button id="testProfilesBtn" class="btn btn-primary btn-sm" onclick="testListProfiles()">
                     <span id="testProfilesText">📋 Test List Profiles</span>
                     <span id="testProfilesSpinner" class="spinner-border spinner-border-sm" style="display: none;"></span>
                 </button>
-                <a href="/api/test-list-profiles/" target="_blank" class="text-decoration-none small">View Raw JSON →</a>
+                <div class="d-flex align-items-center gap-2">
+                    <label class="small text-muted mb-0">Page:</label>
+                    <select id="profilePage" class="form-select form-select-sm" style="width: 70px;" onchange="testListProfiles()">
+                        <option value="0">1</option>
+                    </select>
+                    <label class="small text-muted mb-0">Limit:</label>
+                    <select id="profileLimit" class="form-select form-select-sm" style="width: 80px;" onchange="testListProfiles()">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <a href="/api/v1/profiles/" target="_blank" class="text-decoration-none small">View API →</a>
             </div>
             
             <div id="profilesResult" style="display: none;">
@@ -186,6 +199,17 @@
                         <tbody id="profilesTableBody">
                         </tbody>
                     </table>
+                </div>
+                
+                <!-- Pagination Controls -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <button id="prevProfilePage" class="btn btn-sm btn-outline-secondary" onclick="changeProfilePage(-1)" disabled>
+                        ← Previous
+                    </button>
+                    <span id="profilePageInfo" class="small text-muted">Page 1 of 1</span>
+                    <button id="nextProfilePage" class="btn btn-sm btn-outline-secondary" onclick="changeProfilePage(1)" disabled>
+                        Next →
+                    </button>
                 </div>
             </div>
             
@@ -327,6 +351,14 @@ if (window.location.search.includes('handshake=1')) {
     document.addEventListener('DOMContentLoaded', runHandshake);
 }
 
+// Profile Pagination State
+let profileState = {
+    skip: 0,
+    limit: 25,
+    total: 0,
+    currentPage: 1
+};
+
 // Test List Profiles Function
 function testListProfiles() {
     const btn = document.getElementById('testProfilesBtn');
@@ -335,6 +367,13 @@ function testListProfiles() {
     const resultDiv = document.getElementById('profilesResult');
     const errorDiv = document.getElementById('profilesError');
     const tableBody = document.getElementById('profilesTableBody');
+    
+    // Get pagination values
+    const pageSelect = document.getElementById('profilePage');
+    const limitSelect = document.getElementById('profileLimit');
+    profileState.limit = parseInt(limitSelect.value);
+    profileState.currentPage = parseInt(pageSelect.value) + 1;
+    profileState.skip = parseInt(pageSelect.value) * profileState.limit;
     
     // Reset UI
     resultDiv.style.display = 'none';
@@ -346,21 +385,44 @@ function testListProfiles() {
     btnText.textContent = 'Fetching...';
     btnSpinner.style.display = 'inline-block';
     
-    fetch('/api/test-list-profiles/')
+    fetch(`/api/v1/profiles/?skip=${profileState.skip}&limit=${profileState.limit}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                profileState.total = data.total;
+                
                 // Show success
                 resultDiv.style.display = 'block';
-                document.getElementById('profilesCount').textContent = `${data.count} Profiles`;
+                document.getElementById('profilesCount').textContent = `${data.total} Total Profiles`;
                 document.getElementById('profilesStatus').innerHTML = '<span class="text-success">✓ Success</span>';
+                
+                // Update pagination controls
+                const totalPages = Math.ceil(data.total / profileState.limit);
+                document.getElementById('profilePageInfo').textContent = `Page ${profileState.currentPage} of ${totalPages}`;
+                
+                // Update prev/next buttons
+                document.getElementById('prevProfilePage').disabled = profileState.skip === 0;
+                document.getElementById('nextProfilePage').disabled = (profileState.skip + data.profiles.length) >= data.total;
+                
+                // Update page selector
+                const pageSelector = document.getElementById('profilePage');
+                const currentSelected = pageSelector.value;
+                pageSelector.innerHTML = '';
+                for (let i = 0; i < totalPages; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i + 1;
+                    pageSelector.appendChild(option);
+                }
+                pageSelector.value = Math.min(currentSelected, totalPages - 1);
                 
                 // Populate table
                 data.profiles.forEach((profile, index) => {
+                    const rowNumber = profileState.skip + index + 1;
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td><span class="badge bg-secondary">${profile.type}</span></td>
+                        <td>${rowNumber}</td>
+                        <td><span class="badge bg-secondary">${escapeHtml(profile.type)}</span></td>
                         <td><strong>${escapeHtml(profile.name)}</strong></td>
                         <td><code>${escapeHtml(profile.registration_number)}</code></td>
                         <td>${escapeHtml(profile.category)}</td>
@@ -385,6 +447,18 @@ function testListProfiles() {
             btnText.textContent = '📋 Test List Profiles';
             btnSpinner.style.display = 'none';
         });
+}
+
+// Change Profile Page
+function changeProfilePage(direction) {
+    const pageSelect = document.getElementById('profilePage');
+    const currentPage = parseInt(pageSelect.value);
+    const newPage = currentPage + direction;
+    
+    if (newPage >= 0) {
+        pageSelect.value = newPage;
+        testListProfiles();
+    }
 }
 
 // Test Search Applications Function

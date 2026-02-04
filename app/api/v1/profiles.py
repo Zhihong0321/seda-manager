@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from app.wrapper.seda_wrapper import SEDAClient
 from app.models.profiles import ProfileBase, ProfileUpdate
-from typing import List
+from typing import List, Optional
 
 router = APIRouter()
 
@@ -9,10 +9,31 @@ def get_client():
     """Dependency provider for the SEDA Client."""
     return SEDAClient()
 
-@router.get("/", response_model=List[ProfileBase])
-async def list_profiles(client: SEDAClient = Depends(get_client)):
-    """Retrieve all available client profiles from the SEDA portal."""
-    return client.fetch_profile_list()
+@router.get("/")
+async def list_profiles(
+    skip: int = Query(0, ge=0, description="Number of profiles to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Number of profiles to return"),
+    client: SEDAClient = Depends(get_client)
+):
+    """
+    Retrieve client profiles from the SEDA portal with pagination.
+    
+    - **skip**: Number of profiles to skip (for pagination)
+    - **limit**: Maximum number of profiles to return (default: 100, max: 500)
+    """
+    all_profiles = client.fetch_profile_list()
+    total = len(all_profiles)
+    
+    # Apply pagination
+    paginated_profiles = all_profiles[skip:skip + limit]
+    
+    return {
+        "success": True,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "profiles": paginated_profiles
+    }
 
 @router.get("/search")
 async def search_profile(name: str, client: SEDAClient = Depends(get_client)):
