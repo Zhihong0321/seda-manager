@@ -37,37 +37,63 @@ async def search_applications(
         # Parse the HTML to extract applications
         applications = []
         
-        # Look for application entries in the table
-        # Pattern matches table rows with application data
-        app_patterns = re.findall(
-            r'<tr[^>]*>.*?<a href="/applications/(\d+)/applicant"[^>]*>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>(.*?)</td>.*?</tr>',
+        # Find all table rows with application data
+        # SEDA uses full URLs like https://atap.seda.gov.my/applications/{id}/applicant
+        rows = re.findall(
+            r'<tr>\s*<td>(\d+)</td>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*</tr>',
             response.text,
             re.DOTALL | re.IGNORECASE
         )
         
-        for app_id, col1, col2, col3 in app_patterns:
-            # Clean up HTML tags
-            clean_col1 = re.sub(r'<[^>]+>', '', col1).strip()
-            clean_col2 = re.sub(r'<[^>]+>', '', col2).strip()
-            clean_col3 = re.sub(r'<[^>]+>', '', col3).strip()
+        for row_num, name_cell, status_cell, date_cell, actions_cell in rows:
+            # Extract app ID and name from name_cell
+            app_link_match = re.search(
+                r'href="https://atap\.seda\.gov\.my/applications/(\d+)/applicant"[^>]*>([^<]+)</a>',
+                name_cell
+            )
             
-            applications.append({
-                "id": app_id,
-                "applicant": clean_col1,
-                "application_number": clean_col2,
-                "status": clean_col3,
-                "url": f"/applications/{app_id}/applicant"
-            })
-        
-        # If no patterns matched, try alternative patterns
-        if not applications:
-            # Look for application links
-            app_links = re.findall(r'href="(/applications/(\d+)/applicant)"[^>]*>([^<]*)', response.text)
-            for url_path, app_id, text in app_links:
+            if app_link_match:
+                app_id = app_link_match.group(1)
+                applicant_name = app_link_match.group(2).strip()
+                
+                # Extract registration number
+                reg_no_match = re.search(r'Reg\. No: ([^<]+)', name_cell)
+                reg_no = reg_no_match.group(1).strip() if reg_no_match else None
+                
+                # Extract category
+                category_match = re.search(r'Category: ([^<]+)', name_cell)
+                category = category_match.group(1).strip() if category_match else None
+                
+                # Extract ATP number (application number)
+                atp_match = re.search(r'<strong>(ATP\d+)</strong>', name_cell)
+                atp_number = atp_match.group(1) if atp_match else None
+                
+                # Extract status from status_cell
+                status_match = re.search(r'>([^<]+)</span>', status_cell)
+                app_status = status_match.group(1).strip() if status_match else "Unknown"
+                
                 applications.append({
                     "id": app_id,
-                    "applicant": text.strip(),
-                    "url": url_path
+                    "applicant": applicant_name,
+                    "application_number": atp_number,
+                    "registration_number": reg_no,
+                    "category": category,
+                    "status": app_status,
+                    "row_number": int(row_num),
+                    "url": f"/applications/{app_id}/applicant"
+                })
+        
+        # Fallback: if table parsing didn't work, try link patterns
+        if not applications:
+            app_links = re.findall(
+                r'href="https://atap\.seda\.gov\.my/applications/(\d+)/applicant"[^>]*>([^<]+)</a>',
+                response.text
+            )
+            for app_id, name in app_links:
+                applications.append({
+                    "id": app_id,
+                    "applicant": name.strip(),
+                    "url": f"/applications/{app_id}/applicant"
                 })
         
         return {
