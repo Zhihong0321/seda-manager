@@ -92,7 +92,7 @@ async def get_application_by_mykad(mykad: str):
             "building_type_id": "1", # Always House
             "installation_type": "Rooftop of Building", 
             "distribution_licence_id": "2", # TNB
-            "tariff_category_id": "1" if registration.get("phase_type") == "Single Phase" else "2",
+            "tariff_category_id": "1" if "Single" in (registration.get("phase_type") or "") else "2",
             # --- Competent Person Defaults ---
             "engineer_name": "AHMAD FARUOQI BIN IBRAHIM",
             "engineer_mykad": "880926105147",
