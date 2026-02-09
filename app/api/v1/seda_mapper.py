@@ -22,8 +22,36 @@ async def get_application_by_mykad(mykad: str):
         cur = conn.cursor()
         
         # 1. Fetch SEDA Registration
-        cur.execute("SELECT * FROM seda_registration WHERE ic_no = %s OR ic_no = %s ORDER BY created_at DESC LIMIT 1", (clean_mykad, mykad))
+        # Strategy: Look for the latest registration that actually HAS a TNB account number first
+        cur.execute("""
+            SELECT * FROM seda_registration 
+            WHERE (ic_no IN (%s, %s) OR e_contact_mykad IN (%s, %s))
+            AND tnb_account_no IS NOT NULL AND tnb_account_no != ''
+            ORDER BY created_at DESC LIMIT 1
+        """, (clean_mykad, mykad, clean_mykad, mykad))
         registration = cur.fetchone()
+        
+        # Fallback 1: Just get the latest record if no TNB account found above
+        if not registration or not registration.get("tnb_account_no"):
+            cur.execute("""
+                SELECT * FROM seda_registration 
+                WHERE ic_no IN (%s, %s) OR e_contact_mykad IN (%s, %s)
+                ORDER BY created_at DESC LIMIT 1
+            """, (clean_mykad, mykad, clean_mykad, mykad))
+            registration = cur.fetchone()
+
+        # Fallback 2: If we have a record but NO TNB, search for OTHER registrations linked to the same customer
+        if registration and not registration.get("tnb_account_no"):
+            cust_id = registration.get("linked_customer")
+            if cust_id:
+                cur.execute("""
+                    SELECT tnb_account_no FROM seda_registration 
+                    WHERE linked_customer = %s AND tnb_account_no IS NOT NULL AND tnb_account_no != ''
+                    ORDER BY created_at DESC LIMIT 1
+                """, (cust_id,))
+                alt_tnb = cur.fetchone()
+                if alt_tnb:
+                    registration["tnb_account_no"] = alt_tnb["tnb_account_no"]
         
         if not registration:
             cur.close()
@@ -34,7 +62,16 @@ async def get_application_by_mykad(mykad: str):
         
         # 2. Fetch Linked Invoice
         # SEDA Registration links to Invoice via registration.bubble_id = invoice.linked_seda_registration
-        cur.execute("SELECT * FROM invoice WHERE linked_seda_registration = %s ORDER BY created_at DESC LIMIT 1", (reg_id,))
+        # We also check linked_customer just in case
+        cust_id = registration.get("linked_customer")
+        if cust_id:
+            cur.execute("""
+                SELECT * FROM invoice 
+                WHERE (linked_seda_registration = %s OR linked_customer = %s)
+                ORDER BY created_at DESC LIMIT 1
+            """, (reg_id, cust_id))
+        else:
+            cur.execute("SELECT * FROM invoice WHERE linked_seda_registration = %s ORDER BY created_at DESC LIMIT 1", (reg_id,))
         invoice = cur.fetchone()
         
         package = None
