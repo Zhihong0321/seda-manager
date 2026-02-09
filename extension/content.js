@@ -97,6 +97,19 @@ function fillSedaForm(data, systemDetails, adminDefaults) {
         }
     }
 
+    // 4. Fill Costs from Admin Defaults (Overriding calc if provided)
+    const insPremium = document.getElementById('financing_information[insurance_premium]');
+    const omCost = document.getElementById('financing_information[operation_and_maintenance_cost]');
+
+    if (insPremium && adminDefaults.cost_ins !== undefined && adminDefaults.cost_ins !== "0") {
+        setValue(insPremium, adminDefaults.cost_ins);
+        fieldsFilled++;
+    }
+    if (omCost && adminDefaults.cost_om !== undefined && adminDefaults.cost_om !== "0") {
+        setValue(omCost, adminDefaults.cost_om);
+        fieldsFilled++;
+    }
+
     return { filled: fieldsFilled };
 }
 

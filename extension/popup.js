@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('def-inv-brand-custom').value = d.inv_brand_custom || "";
             document.getElementById('def-inv-model').value = d.inv_model || "";
             document.getElementById('def-inv-cap').value = d.inv_cap || "5";
+            document.getElementById('def-cost-ins').value = d.cost_ins || "0";
+            document.getElementById('def-cost-om').value = d.cost_om || "0";
 
             toggleCustomFields();
         }
@@ -66,7 +68,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             inv_brand: document.getElementById('def-inv-brand').value,
             inv_brand_custom: document.getElementById('def-inv-brand-custom').value,
             inv_model: document.getElementById('def-inv-model').value,
-            inv_cap: document.getElementById('def-inv-cap').value
+            inv_cap: document.getElementById('def-inv-cap').value,
+            cost_ins: document.getElementById('def-cost-ins').value,
+            cost_om: document.getElementById('def-cost-om').value
         };
         await chrome.storage.local.set({ seda_defaults: settings });
         showStatus("Admin Defaults Saved!", "success");
