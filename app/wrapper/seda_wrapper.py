@@ -166,11 +166,12 @@ class SEDAClient:
 
     def _map_profile_data(self, data: Dict) -> List[tuple]:
         """Maps clean API field names to legacy SEDA portal field names."""
+        # Mapping: { our_clean_key: seda_legacy_key }
         mapping = {
             'salutation': 'salutation',
             'name': 'name',
             'citizenship': 'citizenship',
-            'mykad_passport': 'ic_number',
+            'ic_number': 'mykad_passport',
             'email': 'email',
             'address_line_1': 'address_line_1',
             'address_line_2': 'address_line_2',
@@ -180,19 +181,20 @@ class SEDAClient:
             'state': 'state',
             'phone': 'phone',
             'mobile': 'mobile',
-            'contact_salutation': 'emergency_salutation',
-            'contact_name': 'emergency_name',
-            'contact_mykad_passport': 'emergency_ic_number',
-            'contact_citizenship': 'emergency_citizenship',
-            'contact_relationship': 'emergency_relationship',
-            'contact_email': 'emergency_email',
-            'contact_phone': 'emergency_phone',
-            'contact_mobile': 'emergency_mobile'
+            'emergency_salutation': 'contact_salutation',
+            'emergency_name': 'contact_name',
+            'emergency_ic_number': 'contact_mykad_passport',
+            'emergency_citizenship': 'contact_citizenship',
+            'emergency_relationship': 'contact_relationship',
+            'emergency_email': 'contact_email',
+            'emergency_phone': 'contact_phone',
+            'emergency_mobile': 'contact_mobile'
         }
         
         payload = []
-        for seda_field, data_key in mapping.items():
-            value = data.get(data_key, "")
+        logger.info("Preparing SEDA payload...")
+        for clean_key, seda_field in mapping.items():
+            value = data.get(clean_key, "")
             
             # Legacy logic: Title/Salutation formatting
             if seda_field == 'salutation' and value and not str(value).endswith('.'):
@@ -202,11 +204,19 @@ class SEDAClient:
             if seda_field in ['mykad_passport', 'contact_mykad_passport'] and value:
                 value = re.sub(r'[^0-9A-Za-z]', '', str(value))
             
-            # Legacy logic: Fallback for missing contact phone
-            if seda_field == 'contact_phone' and not value:
-                value = data.get('emergency_mobile', '')
+            # Legacy logic: Fallback for missing contact phone (REMOVED: caused validation error)
+            # if seda_field == 'contact_phone' and not value:
+            #     value = data.get('emergency_mobile', '')
+
+            # NEW: Strict cleaning for landing phone fields (must not be mobile numbers)
+            if seda_field in ['phone', 'contact_phone'] and value:
+                clean_val = re.sub(r'[^0-9]', '', str(value))
+                if clean_val.startswith('01') and len(clean_val) >= 10:
+                    logger.warning(f"  Filtering out mobile number from landline field {seda_field}: {value}")
+                    value = ""
                 
             payload.append((seda_field, str(value) if value is not None else ""))
+            logger.debug(f"  {seda_field} => {value}")
         
         return payload
 
@@ -313,30 +323,46 @@ class SEDAClient:
             logger.info(f"Submitting update for individual {profile_id}. Note: SEDA will assign a new ID.")
             response = self.session.post(url, data=payload, headers={'Referer': url})
             self._validate_response(response)
-            
-            # Success check: SEDA usually redirects to /profiles or displays a success message
-            if "Profile updated successfully" in response.text or response.status_code == 200:
-                logger.info(f"Update submitted for {profile_id}. Verifying new ID...")
+
+            # SEVERE FIX: SEDA redirects to /profiles on success. 
+            # If it redirects back to /edit, it means there was a validation error.
+            if "/edit" in response.url:
+                # Try to find the error message in the page
+                error_match = re.search(r'<div class="invalid-feedback">\s*(.*?)\s*</div>', response.text)
+                error_msg = error_match.group(1) if error_match else "Validation failed (check field formats)."
                 
+                # Save the failing page for inspection
+                with open("debug_error.html", "w", encoding="utf-8") as f:
+                    f.write(response.text)
+                
+                logger.error(f"Update failed for {profile_id}: {error_msg}. See debug_error.html for details.")
+                return None
+
+            # If we are at the list page, it's likely a success.
+            if "/profiles" in response.url or "Profile updated successfully" in response.text:
+                logger.info(f"Update submitted for {profile_id}. Verifying new ID...")
+
                 # Search by registration number to find the NEWLY created profile ID
                 if reg_no:
-                    # Search specifically for this registration number
-                    # We might need to check more than 1 page if they have TONS of history
                     matches = self.fetch_profile_list(registration_number=reg_no, max_pages=3)
                     if matches:
-                        # Find the highest numeric ID among all matches
-                        # The IDs are strings in 'profiles', so we convert to int for comparison
+                        # Find the highest numeric ID among all matches that is NOT the old ID
                         try:
                             sorted_matches = sorted(matches, key=lambda x: int(x['id']), reverse=True)
                             new_id = sorted_matches[0]['id']
-                            logger.info(f"Profile {profile_id} updated. Latest active ID is {new_id} (Found among {len(matches)} historical records)")
+                            
+                            if new_id == profile_id and len(sorted_matches) > 1:
+                                # If the highest is the old one, maybe the new one is second? 
+                                # Or maybe it hasn't appeared yet.
+                                logger.warning(f"Only found the old ID {profile_id}. New ID might be delayed.")
+                            
+                            logger.info(f"Profile {profile_id} updated. Latest active ID is {new_id}")
                             return new_id
                         except (ValueError, KeyError, IndexError):
-                            # Fallback if ID is not an integer or list is empty
                             return matches[0]['id']
-                
+
                 return profile_id # Fallback if we can't find the new one
-            
+
             return None
 
         except Exception as e:

@@ -128,7 +128,8 @@ async def update_profile(
     
     return {
         "success": True,
+        "uuid": payload.ic_number, # MyKad is our persistent UUID
         "old_profile_id": profile_id,
         "new_profile_id": new_profile_id,
-        "message": "Update submitted successfully. Note that SEDA has generated a new profile ID."
+        "message": f"Update successful for MyKad {payload.ic_number}. Note: SEDA has assigned a new internal ID {new_profile_id}."
     }
