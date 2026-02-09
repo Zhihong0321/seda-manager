@@ -11,45 +11,68 @@ DATABASE_URL = "postgresql://postgres:tkaYtCcfkqfsWKjQguFMqIcANbJNcNZA@shinkanse
 @router.get("/by-mykad/{mykad}")
 async def get_application_by_mykad(mykad: str):
     """
-    Fetch SEDA registration data from the database using MyKad (ic_no).
-    Maps the database fields to the SEDA portal input names.
+    Fetch SEDA registration data, linked invoice, and package details from the database.
+    Maps system data to SEDA portal application fields.
     """
-    # Clean MyKad (remove dashes if any)
     clean_mykad = mykad.replace("-", "").strip()
     
     try:
         conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
         cur = conn.cursor()
         
-        # Search in seda_registration table
-        query = "SELECT * FROM seda_registration WHERE ic_no = %s OR ic_no = %s LIMIT 1"
-        # Try both clean and possibly dashed if stored that way
-        cur.execute(query, (clean_mykad, mykad))
+        # 1. Fetch SEDA Registration
+        cur.execute("SELECT * FROM seda_registration WHERE ic_no = %s OR ic_no = %s ORDER BY created_at DESC LIMIT 1", (clean_mykad, mykad))
+        registration = cur.fetchone()
         
-        row = cur.fetchone()
+        if not registration:
+            cur.close()
+            conn.close()
+            raise HTTPException(status_code=404, detail=f"No registration found for MyKad: {mykad}")
+            
+        reg_id = registration.get("bubble_id")
+        
+        # 2. Fetch Linked Invoice
+        # SEDA Registration links to Invoice via registration.bubble_id = invoice.linked_seda_registration
+        cur.execute("SELECT * FROM invoice WHERE linked_seda_registration = %s ORDER BY created_at DESC LIMIT 1", (reg_id,))
+        invoice = cur.fetchone()
+        
+        package = None
+        if invoice:
+            # 3. Fetch Linked Package
+            package_id = invoice.get("linked_package") # This usually contains the bubble_id of the package
+            if package_id:
+                cur.execute("SELECT * FROM package WHERE bubble_id = %s LIMIT 1", (package_id,))
+                package = cur.fetchone()
+
         cur.close()
         conn.close()
         
-        if not row:
-            raise HTTPException(status_code=404, detail=f"No registration found for MyKad: {mykad}")
-            
-        # Map DB fields to SEDA Portal Input Names
-        # These names must match the 'name' or 'id' attributes on the SEDA portal form.
+        # Map DB fields to SEDA Portal Input Names (Step 2: Application Details)
+        # Note: We prioritize data from the registration record, then invoice/package
         mapped_data = {
-            "account_number": row.get("tnb_account_no"),
-            "capacity": str(row.get("inverter_kwac") or ""),
-            "capacity_peak": str(row.get("system_size_in_form_kwp") or ""),
-            "installation_type": "Rooftop of Building", # Default common value
+            "account_number": registration.get("tnb_account_no"),
+            "capacity": str(registration.get("inverter_kwac") or ""),
+            "capacity_peak": str(registration.get("system_size_in_form_kwp") or ""),
+            "installation_type": "Rooftop of Building", # Default
             "distribution_licence_id": "2", # TNB
-            "tariff_category_id": "1" if row.get("phase_type") == "Single Phase" else "2", 
-            # Add more mappings as discovered
+            "tariff_category_id": "1" if registration.get("phase_type") == "Single Phase" else "2",
+        }
+
+        # Enrich with invoice/package data for the UI
+        system_details = {
+            "invoice_no": invoice.get("invoice_id") if invoice else None,
+            "total_amount": float(invoice.get("total_amount") or 0) if invoice else 0,
+            "package_name": package.get("package_name") if package else invoice.get("package_name_snapshot"),
+            "panel_qty": invoice.get("panel_qty") or (package.get("panel_qty") if package else None),
+            "panel_rating": invoice.get("panel_rating") or (package.get("panel") if package else None), # package.panel might be the rating
         }
         
         return {
             "success": True,
             "mykad": mykad,
-            "data": mapped_data,
-            "raw": {k: str(v) for k, v in row.items() if v is not None} # Optional: for debugging
+            "mapped_to_seda": mapped_data,
+            "system_details": system_details,
+            "registration": {k: str(v) for k, v in registration.items() if v is not None}
         }
         
     except Exception as e:

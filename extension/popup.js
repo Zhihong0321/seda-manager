@@ -56,10 +56,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const result = await response.json();
-            fetchedData = result.data;
+            fetchedData = result.mapped_to_seda;
+            const systemDetails = result.system_details;
 
-            showPreview(fetchedData);
-            showStatus("Data synchronized successfully!", "success");
+            showPreview(fetchedData, systemDetails);
+            showStatus("Data synced from SEDA DB!", "success");
             fillBtn.disabled = false;
         } catch (err) {
             console.error("Fetch error:", err);
@@ -95,9 +96,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusDiv.style.display = "block";
     }
 
-    function showPreview(data) {
-        previewDiv.innerHTML = '<div style="font-weight:600; margin-bottom:8px; font-size:11px; color:var(--accent)">READY TO MAP:</div>';
+    function showPreview(data, details) {
+        previewDiv.innerHTML = '';
+
+        if (details) {
+            const detailsHtml = `
+                <div style="background: rgba(255,140,0,0.1); border: 1px solid var(--primary); border-radius: 8px; padding: 10px; margin-bottom: 12px;">
+                    <div style="font-weight:700; font-size:12px; color:var(--primary); margin-bottom:6px;">SYSTEM DETAILS</div>
+                    <div class="data-item"><span class="data-label">Invoice:</span> <span>${details.invoice_no || 'N/A'}</span></div>
+                    <div class="data-item"><span class="data-label">Package:</span> <span>${details.package_name || 'N/A'}</span></div>
+                    <div class="data-item"><span class="data-label">Panel Qty:</span> <span style="font-weight:bold; color:var(--accent)">${details.panel_qty || 'N/A'}</span></div>
+                    <div class="data-item"><span class="data-label">Amount:</span> <span>${details.total_amount ? 'RM ' + details.total_amount : 'N/A'}</span></div>
+                </div>
+            `;
+            previewDiv.innerHTML += detailsHtml;
+        }
+
+        previewDiv.innerHTML += '<div style="font-weight:600; margin-bottom:8px; font-size:11px; color:var(--accent)">READY TO MAP TO SEDA:</div>';
         previewDiv.style.display = "block";
+
         Object.entries(data).forEach(([key, val]) => {
             if (!val) return;
             const item = document.createElement('div');
