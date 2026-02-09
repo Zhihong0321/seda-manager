@@ -287,11 +287,19 @@ class SEDAClient:
                 # Search by registration number to find the NEWLY created profile ID
                 if reg_no:
                     # Search specifically for this registration number
-                    matches = self.fetch_profile_list(registration_number=reg_no, max_pages=1)
+                    # We might need to check more than 1 page if they have TONS of history
+                    matches = self.fetch_profile_list(registration_number=reg_no, max_pages=3)
                     if matches:
-                        new_id = matches[0]['id']
-                        logger.info(f"Profile {profile_id} updated. New ID is {new_id}")
-                        return new_id
+                        # Find the highest numeric ID among all matches
+                        # The IDs are strings in 'profiles', so we convert to int for comparison
+                        try:
+                            sorted_matches = sorted(matches, key=lambda x: int(x['id']), reverse=True)
+                            new_id = sorted_matches[0]['id']
+                            logger.info(f"Profile {profile_id} updated. Latest active ID is {new_id} (Found among {len(matches)} historical records)")
+                            return new_id
+                        except (ValueError, KeyError, IndexError):
+                            # Fallback if ID is not an integer or list is empty
+                            return matches[0]['id']
                 
                 return profile_id # Fallback if we can't find the new one
             
