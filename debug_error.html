@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+
+<html lang="en"
+  class="layout-navbar-fixed layout-compact layout-menu-fixed   "
+  dir="ltr" data-skin="default" data-assets-path="https://atap.seda.gov.my/assets/"
+  data-base-url="http://atap.seda.gov.my" data-framework="laravel" data-template="vertical-menu-template"
+  data-bs-theme="light" >
+
+<head>
+    <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-E2LK0KED13"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+  
+    gtag('config', 'G-E2LK0KED13');
+  </script>
+    <meta charset="utf-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+
+  <title>
+    Profile - Edit Company | eATAP
+    - SEDA Malaysia
+  </title>
+  <meta name="description"
+    content="eATAP - Solar Accelerated Transition Action Programme by SEDA Malaysia" />
+  <meta name="keywords"
+    content="renewable energy, seda malaysia, solar pv, atap, accelerated transition action programme" />
+  <meta property="og:title" content="Materio Bootstrap 5 HTML + Laravel Admin Template by ThemeSelection" />
+  <meta property="og:type" content="product" />
+  <meta property="og:url" content="https://themeselection.com/item/materio-dashboard-pro-laravel/" />
+  <meta property="og:image" content="https://ts-assets.b-cdn.net/ts-assets/materio/materio-bootstrap-laravel-admin-template/marketing/materio-bootstrap-laravel-admin-template-smm.png" />
+  <meta property="og:description"
+    content="eATAP - Solar Accelerated Transition Action Programme by SEDA Malaysia" />
+  <meta property="og:site_name"
+    content="SEDA Malaysia" />
+  <meta name="robots" content="noindex, nofollow" />
+  <!-- laravel CRUD token -->
+  <meta name="csrf-token" content="MbePi38VCS88JBLeZ4QLUMGYXQHbZeVvfNUu2WMg" />
+  <!-- Canonical SEO -->
+  <link rel="canonical" href="https://themeselection.com/item/materio-dashboard-pro-laravel/" />
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="https://atap.seda.gov.my/assets/img/favicon/favicon.ico" />
+
+  <!-- Include Styles -->
+  <!-- $isFront is used to append the front layout styles only on the front layout otherwise the variable will be blank -->
+  <!-- BEGIN: Theme CSS-->
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&ampdisplay=swap" rel="stylesheet" />
+
+<!-- Fonts Icons -->
+<link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/iconify-CUE6U6uZ.css" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/iconify-CUE6U6uZ.css" class="" />
+<!-- BEGIN: Vendor CSS-->
+<link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/node-waves-CNx6tA5W.css" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/node-waves-CNx6tA5W.css" class="" />
+  <link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/pickr-themes-CFnMLNHJ.css" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/pickr-themes-CFnMLNHJ.css" class="" />
+<!-- Core CSS -->
+<link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/core-wxqiSdYo.css" /><link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/demo-BxsKPLJR.css" /><link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/perfect-scrollbar-CfyPsj0y.css" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/core-wxqiSdYo.css" class="template-customizer-core-css" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/demo-BxsKPLJR.css" class="" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/perfect-scrollbar-CfyPsj0y.css" class="" />
+<!-- Vendor Styles -->
+<link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/perfect-scrollbar-CfyPsj0y.css" /><link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/typeahead-CKaqM2Dk.css" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/perfect-scrollbar-CfyPsj0y.css" class="" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/typeahead-CKaqM2Dk.css" class="" />
+<!-- SweetAlert2 Styles -->
+<link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/animate-BP00llhF.css" /><link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/sweetalert2-C6Iw9aw4.css" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/animate-BP00llhF.css" class="" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/sweetalert2-C6Iw9aw4.css" class="" />
+
+<link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/flatpickr-B7pB74XQ.css" /><link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/bootstrap-daterangepicker-DpM5rV1g.css" /><link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/jquery-timepicker-ClC8et_v.css" /><link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/pickr-themes-CFnMLNHJ.css" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/flatpickr-B7pB74XQ.css" class="" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/bootstrap-daterangepicker-DpM5rV1g.css" class="" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/jquery-timepicker-ClC8et_v.css" class="" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/pickr-themes-CFnMLNHJ.css" class="" />
+
+<link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/select2-CdrSatkw.css" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/select2-CdrSatkw.css" class="" />
+
+<!-- Page Styles -->
+
+<!-- app CSS -->
+<link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/app-D2sQMZPB.css" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/app-D2sQMZPB.css" class="" /><!-- END: app CSS-->
+
+  
+  <!-- Include Scripts for customizer, helper, analytics, config -->
+  <!-- $isFront is used to append the front layout scriptsIncludes only on the front layout otherwise the variable will be blank -->
+  <!-- laravel style -->
+<link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/helpers-wD9hV1oH.js" /><script type="module" src="https://atap.seda.gov.my/build/assets/helpers-wD9hV1oH.js"></script><!-- beautify ignore:start -->
+<!--! Template customizer & Theme config files MUST be included after core stylesheets and helpers.js in the <head> section -->
+  <!--? Template customizer: To hide customizer set displayCustomizer value false in config.js.  -->
+  <link rel="preload" as="style" href="https://atap.seda.gov.my/build/assets/template-customizer-CyQME3xr.css" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/template-customizer-Dbqkuulf.js" /><link rel="stylesheet" href="https://atap.seda.gov.my/build/assets/template-customizer-CyQME3xr.css" /><script type="module" src="https://atap.seda.gov.my/build/assets/template-customizer-Dbqkuulf.js"></script>
+  <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
+  <link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/config-BoP0Nie5.js" /><script type="module" src="https://atap.seda.gov.my/build/assets/config-BoP0Nie5.js"></script>
+<script type="module">
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize template customizer after DOM is loaded
+    if (window.TemplateCustomizer) {
+      try {
+        // Get the skin currently applied to the document
+        const appliedSkin = document.documentElement.getAttribute('data-skin') || "default";
+
+        window.templateCustomizer = new TemplateCustomizer({
+          defaultTextDir: "ltr",
+                    defaultTheme: "light",
+          defaultSkin: appliedSkin,
+          defaultSemiDark: false,
+          defaultShowDropdownOnHover: "1",
+          displayCustomizer: "1",
+          lang: 'en',
+          'controls': ["color","theme","skins","semiDark","layoutCollapsed","layoutNavbarOptions","headerType","contentLayout","rtl"],
+        });
+
+        // Ensure color is applied on page load
+              } catch (error) {
+        console.warn('Template customizer initialization error:', error);
+      }
+    }
+  });
+</script>
+</head>
+
+<body>
+  <!-- Layout Content -->
+  	<div class="layout-wrapper layout-content-navbar ">
+		<div class="layout-container">
+
+						<aside id="layout-menu" class="layout-menu menu-vertical menu" >
+
+    <!-- ! Hide app brand if navbar-full -->
+            <div class="app-brand demo">
+            <a href="https://atap.seda.gov.my" class="app-brand-link gap-xl-0 gap-2">
+                <span class="app-brand-logo demo me-1"><span class="text-primary">
+    
+    <img src="https://atap.seda.gov.my/assets/img/seda/eatap-logo.png?v=1.0.1" alt="eATAP Logo" width="45" height="22" />
+</span>
+</span>
+                <span class="demo menu-text fw-semibold ms-2 text-black">eATAP</span>
+            </a>
+
+            <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
+                <i class="menu-toggle-icon d-xl-inline-block align-middle"></i>
+            </a>
+        </div>
+    
+    <div class="menu-inner-shadow"></div>
+    <ul class="menu-inner py-1">
+        
+                    
+                            
+
+                
+                                    
+                    
+                    
+                    <li class="menu-item ">
+                        <a href="https://atap.seda.gov.my/home" class="menu-link" >
+                                                            <i class="menu-icon icon-base ri ri-home-smile-line"></i>
+                                                        <div>Home</div>
+                                                    </a>
+
+                        
+                                            </li>
+                                                
+                            
+
+                
+                                    <li class="menu-header mt-7">
+                        <span class="menu-header-text">Contractor: Menu</span>
+                    </li>
+                                                
+                            
+
+                
+                                    
+                    
+                    
+                    <li class="menu-item ">
+                        <a href="javascript:void(0);" class="menu-link menu-toggle" >
+                                                            <i class="menu-icon icon-base ri ri-mail-open-line"></i>
+                                                        <div>My Account</div>
+                                                    </a>
+
+                        
+                                                    <ul class="menu-sub">
+            
+      
+    
+    
+      <li class="menu-item ">
+        <a href="https://atap.seda.gov.my/my_account/profile/contractor" class="menu-link" >
+                    <div>My Profile</div>
+                  </a>
+
+        
+              </li>
+                
+      
+    
+    
+      <li class="menu-item ">
+        <a href="https://atap.seda.gov.my/my_account/change_password" class="menu-link" >
+                    <div>Change Password</div>
+                  </a>
+
+        
+              </li>
+            </ul>
+                                            </li>
+                                                
+                            
+
+                
+                                    
+                    
+                    
+                    <li class="menu-item active">
+                        <a href="https://atap.seda.gov.my/profiles" class="menu-link" >
+                                                            <i class="menu-icon icon-base ri ri-mail-open-line"></i>
+                                                        <div>Applicant Profiles</div>
+                                                    </a>
+
+                        
+                                            </li>
+                                                
+                            
+
+                
+                                    
+                    
+                    
+                    <li class="menu-item ">
+                        <a href="https://atap.seda.gov.my/applications" class="menu-link" >
+                                                            <i class="menu-icon icon-base ri ri-wechat-line"></i>
+                                                        <div>Applications</div>
+                                                    </a>
+
+                        
+                                            </li>
+                                                
+                            
+
+                
+                                    
+                    
+                    
+                    <li class="menu-item ">
+                        <a href="https://atap.seda.gov.my/messages" class="menu-link" >
+                                                            <i class="menu-icon icon-base ri ri-drag-drop-line"></i>
+                                                        <div>Messages</div>
+                                                    </a>
+
+                        
+                                            </li>
+                                            
+    </ul>
+
+</aside>
+			
+			<!-- Layout page -->
+			<div class="layout-page">
+
+				
+				
+
+				<!-- BEGIN: Navbar-->
+									<!-- Navbar -->
+<nav
+  class="layout-navbar container-xxl navbar-detached navbar navbar-expand-xl align-items-center bg-navbar-theme"
+  id="layout-navbar">
+  <!--  Brand demo (display only for navbar-full and hide on below xl) -->
+
+<!-- ! Not required for layout-without-menu -->
+    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-4 me-xl-0   d-xl-none ">
+        <a class="nav-item nav-link px-0 me-xl-6" href="javascript:void(0)">
+            <i class="icon-base ri ri-menu-line icon-md"></i>
+        </a>
+    </div>
+
+<div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
+
+    
+    
+    <ul class="navbar-nav flex-row align-items-center ms-md-auto">
+        
+                    <!-- Style Switcher -->
+            <li class="nav-item dropdown me-sm-2 me-xl-0">
+                <a class="nav-link dropdown-toggle hide-arrow btn btn-icon btn-text-secondary rounded-pill" id="nav-theme" href="javascript:void(0);" data-bs-toggle="dropdown">
+                    <i class="icon-base ri ri-sun-line icon-22px theme-icon-active"></i>
+                    <span class="d-none ms-2" id="nav-theme-text">Toggle theme</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-theme-text">
+                    <li>
+                        <button type="button" class="dropdown-item align-items-center active" data-bs-theme-value="light" aria-pressed="false">
+                            <span> <i class="icon-base ri ri-sun-line icon-md me-3" data-icon="sun-line"></i>Light</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="dropdown-item align-items-center" data-bs-theme-value="dark" aria-pressed="true">
+                            <span> <i class="icon-base ri ri-moon-clear-line icon-md me-3" data-icon="moon-clear-line"></i>Dark</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="dropdown-item align-items-center" data-bs-theme-value="system" aria-pressed="false">
+                            <span> <i class="icon-base ri ri-computer-line icon-md me-3" data-icon="computer-line"></i>System</span>
+                        </button>
+                    </li>
+                </ul>
+            </li>
+            <!-- / Style Switcher-->
+        
+        <!-- User -->
+        <li class="nav-item navbar-dropdown dropdown-user dropdown">
+            <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
+                <div class="avatar avatar-online">
+                    <img src="https://atap.seda.gov.my/assets/img/avatars/3.png" alt="alt" class="rounded-circle" />
+                </div>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end mt-3 py-2">
+                <li>
+                    <a class="dropdown-item" href="https://atap.seda.gov.my/pages/profile-user">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 me-2">
+                                <div class="avatar avatar-online">
+                                    <img src="https://atap.seda.gov.my/assets/img/avatars/3.png" alt="alt" class="w-px-40 h-auto rounded-circle" />
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 small">
+                                                                            ETERNALGY SDN BHD
+                                                                    </h6>
+                                                            </div>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <div class="dropdown-divider my-1"></div>
+                </li>
+                                    <li>
+                        <div class="d-grid px-4 pt-2 pb-1">
+                            <a class="btn btn-danger d-flex" href="https://atap.seda.gov.my/logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                <i class="icon-base ri ri-logout-box-r-line ms-2 icon-16px"></i>
+                                <small class="align-middle">Logout</small>
+                            </a>
+                        </div>
+                    </li>
+                    <form method="POST" id="logout-form" action="https://atap.seda.gov.my/logout">
+                        <input type="hidden" name="_token" value="MbePi38VCS88JBLeZ4QLUMGYXQHbZeVvfNUu2WMg" autocomplete="off">                    </form>
+                            </ul>
+        </li>
+        <!--/ User -->
+    </ul>
+</div>
+</nav>
+<!-- / Navbar -->
+								<!-- END: Navbar-->
+
+				<!-- Content wrapper -->
+				<div class="content-wrapper">
+
+					<!-- Content -->
+											<div class="container-xxl flex-grow-1 container-p-y">
+					
+					<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		<h6 class="alert-heading mb-1">
+			<i class="ri ri-error-warning-line me-2"></i>Opps!
+		</h6>
+		<span>Please correct the following errors:</span>
+		<ul class="mb-0 mt-2">
+							<li>The Telephone No format is invalid.</li>
+					</ul>
+		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+
+					    <div class="col-md-12">
+        <form class="form-horizontal" method="POST" action="https://atap.seda.gov.my/profiles/individuals/4153/edit"><input type="hidden" name="_method" id="_method" value="PUT"><input type="hidden" name="_token" value="MbePi38VCS88JBLeZ4QLUMGYXQHbZeVvfNUu2WMg">
+        <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+                            <h5 class="mb-0">Individual Profile</h5>
+                    </div>
+        <div>
+                            <a href="https://atap.seda.gov.my/applications/individuals/4153/create" class="btn btn-success btn-xs">
+                    <i class="fa fa-plus"></i> Create Application
+                </a>
+                    </div>
+    </div>
+    <div class="card-body">
+                <hr class="my-6 mx-n4" />
+        <input type="hidden" name="_token" value="MbePi38VCS88JBLeZ4QLUMGYXQHbZeVvfNUu2WMg" autocomplete="off">                <h6 class="mb-4">1. Individual Details</h6>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="salutation">Salutation<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="salutation" id="salutation" value="MR." required placeholder="Salutation">
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="name">Name<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                                    <input class="form-control" type="text" name="name" id="name" value="TEST PROFILE TEST TWO" required placeholder="Name">
+                                <span class="help-block">Please insert your name as per Mykad/Passport</span>
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="citizenship">Citizenship<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <select class="form-control" name="citizenship" id="citizenship" required><option value>--Select--</option><option value="Malaysian" selected="selected">Malaysian</option><option value="Afghan">Afghan</option><option value="Albanian">Albanian</option><option value="Algerian">Algerian</option><option value="American">American</option><option value="Andorran">Andorran</option><option value="Angolan">Angolan</option><option value="Antiguans">Antiguans</option><option value="Argentinean">Argentinean</option><option value="Armenian">Armenian</option><option value="Australian">Australian</option><option value="Austrian">Austrian</option><option value="Azerbaijani">Azerbaijani</option><option value="Bahamian">Bahamian</option><option value="Bahraini">Bahraini</option><option value="Bangladeshi">Bangladeshi</option><option value="Barbadian">Barbadian</option><option value="Barbudans">Barbudans</option><option value="Batswana">Batswana</option><option value="Belarusian">Belarusian</option><option value="Belgian">Belgian</option><option value="Belizean">Belizean</option><option value="Beninese">Beninese</option><option value="Bhutanese">Bhutanese</option><option value="Bolivian">Bolivian</option><option value="Bosnian">Bosnian</option><option value="Brazilian">Brazilian</option><option value="British">British</option><option value="Bruneian">Bruneian</option><option value="Bulgarian">Bulgarian</option><option value="Burkinabe">Burkinabe</option><option value="Burmese">Burmese</option><option value="Burundian">Burundian</option><option value="Cambodian">Cambodian</option><option value="Cameroonian">Cameroonian</option><option value="Canadian">Canadian</option><option value="Cape Verdean">Cape Verdean</option><option value="Central African">Central African</option><option value="Chadian">Chadian</option><option value="Chilean">Chilean</option><option value="Chinese">Chinese</option><option value="Colombian">Colombian</option><option value="Comoran">Comoran</option><option value="Congolese">Congolese</option><option value="Costa Rican">Costa Rican</option><option value="Croatian">Croatian</option><option value="Cuban">Cuban</option><option value="Cypriot">Cypriot</option><option value="Czech">Czech</option><option value="Danish">Danish</option><option value="Djibouti">Djibouti</option><option value="Dominican">Dominican</option><option value="Dutch">Dutch</option><option value="East Timorese">East Timorese</option><option value="Ecuadorean">Ecuadorean</option><option value="Egyptian">Egyptian</option><option value="Emirian">Emirian</option><option value="Equatorial Guinean">Equatorial Guinean</option><option value="Eritrean">Eritrean</option><option value="Estonian">Estonian</option><option value="Ethiopian">Ethiopian</option><option value="Fijian">Fijian</option><option value="Filipino">Filipino</option><option value="Finnish">Finnish</option><option value="French">French</option><option value="Gabonese">Gabonese</option><option value="Gambian">Gambian</option><option value="Georgian">Georgian</option><option value="German">German</option><option value="Ghanaian">Ghanaian</option><option value="Greek">Greek</option><option value="Grenadian">Grenadian</option><option value="Guatemalan">Guatemalan</option><option value="Guinea-Bissauan">Guinea-Bissauan</option><option value="Guinean">Guinean</option><option value="Guyanese">Guyanese</option><option value="Haitian">Haitian</option><option value="Herzegovinian">Herzegovinian</option><option value="Honduran">Honduran</option><option value="Hungarian">Hungarian</option><option value="I-Kiribati">I-Kiribati</option><option value="Icelander">Icelander</option><option value="Indian">Indian</option><option value="Indonesian">Indonesian</option><option value="Iranian">Iranian</option><option value="Iraqi">Iraqi</option><option value="Irish">Irish</option><option value="Israeli">Israeli</option><option value="Italian">Italian</option><option value="Ivorian">Ivorian</option><option value="Jamaican">Jamaican</option><option value="Japanese">Japanese</option><option value="Jordanian">Jordanian</option><option value="Kazakhstani">Kazakhstani</option><option value="Kenyan">Kenyan</option><option value="Kittian and Nevisian">Kittian and Nevisian</option><option value="Kuwaiti">Kuwaiti</option><option value="Kyrgyz">Kyrgyz</option><option value="Laotian">Laotian</option><option value="Latvian">Latvian</option><option value="Lebanese">Lebanese</option><option value="Liberian">Liberian</option><option value="Libyan">Libyan</option><option value="Liechtensteiner">Liechtensteiner</option><option value="Lithuanian">Lithuanian</option><option value="Luxembourger">Luxembourger</option><option value="Macedonian">Macedonian</option><option value="Malagasy">Malagasy</option><option value="Malawian">Malawian</option><option value="Maldivan">Maldivan</option><option value="Malian">Malian</option><option value="Maltese">Maltese</option><option value="Marshallese">Marshallese</option><option value="Mauritanian">Mauritanian</option><option value="Mauritian">Mauritian</option><option value="Mexican">Mexican</option><option value="Micronesian">Micronesian</option><option value="Moldovan">Moldovan</option><option value="Monacan">Monacan</option><option value="Mongolian">Mongolian</option><option value="Moroccan">Moroccan</option><option value="Mosotho">Mosotho</option><option value="Motswana">Motswana</option><option value="Mozambican">Mozambican</option><option value="Namibian">Namibian</option><option value="Nauruan">Nauruan</option><option value="Nepalese">Nepalese</option><option value="Netherlander">Netherlander</option><option value="New Zealander">New Zealander</option><option value="Ni-Vanuatu">Ni-Vanuatu</option><option value="Nicaraguan">Nicaraguan</option><option value="Nigerian">Nigerian</option><option value="Nigerien">Nigerien</option><option value="North Korean">North Korean</option><option value="Northern Irish">Northern Irish</option><option value="Norwegian">Norwegian</option><option value="Omani">Omani</option><option value="Pakistani">Pakistani</option><option value="Palauan">Palauan</option><option value="Panamanian">Panamanian</option><option value="Papua New Guinean">Papua New Guinean</option><option value="Paraguayan">Paraguayan</option><option value="Peruvian">Peruvian</option><option value="Polish">Polish</option><option value="Portuguese">Portuguese</option><option value="Qatari">Qatari</option><option value="Romanian">Romanian</option><option value="Russian">Russian</option><option value="Rwandan">Rwandan</option><option value="Saint Lucian">Saint Lucian</option><option value="Salvadoran">Salvadoran</option><option value="Samoan">Samoan</option><option value="San Marinese">San Marinese</option><option value="Sao Tomean">Sao Tomean</option><option value="Saudi">Saudi</option><option value="Scottish">Scottish</option><option value="Senegalese">Senegalese</option><option value="Serbian">Serbian</option><option value="Seychellois">Seychellois</option><option value="Sierra Leonean">Sierra Leonean</option><option value="Singaporean">Singaporean</option><option value="Slovakian">Slovakian</option><option value="Slovenian">Slovenian</option><option value="Solomon Islander">Solomon Islander</option><option value="Somali">Somali</option><option value="South African">South African</option><option value="South Korean">South Korean</option><option value="Spanish">Spanish</option><option value="Sri Lankan">Sri Lankan</option><option value="Sudanese">Sudanese</option><option value="Surinamer">Surinamer</option><option value="Swazi">Swazi</option><option value="Swedish">Swedish</option><option value="Swiss">Swiss</option><option value="Syrian">Syrian</option><option value="Taiwanese">Taiwanese</option><option value="Tajik">Tajik</option><option value="Tanzanian">Tanzanian</option><option value="Thai">Thai</option><option value="Togolese">Togolese</option><option value="Tongan">Tongan</option><option value="Trinidadian or Tobagonian">Trinidadian or Tobagonian</option><option value="Tunisian">Tunisian</option><option value="Turkish">Turkish</option><option value="Tuvaluan">Tuvaluan</option><option value="Ugandan">Ugandan</option><option value="Ukrainian">Ukrainian</option><option value="Uruguayan">Uruguayan</option><option value="Uzbekistani">Uzbekistani</option><option value="Venezuelan">Venezuelan</option><option value="Vietnamese">Vietnamese</option><option value="Welsh">Welsh</option><option value="Yemenite">Yemenite</option><option value="Zambian">Zambian</option><option value="Zimbabwean">Zimbabwean</option></select>
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="mykad_passport">MyKad/Passport No<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                                    <input class="form-control" type="text" name="mykad_passport" id="mykad_passport" value="020202012051" required maxlength="12" placeholder="Enter MyKad (12 digits) or Passport (6-9 chars)" oninput="validateMykadPassport(this)">
+                                <span id="mykad-passport-error" class="text-danger d-block" style="display:none;"></span>
+                            </div>
+        </div>
+        <script>
+            function validateMykadPassport(input) {
+                const value = input.value.trim();
+                const errorSpan = document.getElementById('mykad-passport-error');
+                let error = '';
+                if (/^\d+$/.test(value)) {
+                    // MyKad: must be exactly 12 digits
+                    if (value.length !== 12) {
+                        error = 'MyKad must be exactly 12 digits.';
+                    }
+                } else if (value.length > 0) {
+                    // Passport: alphanumeric, 6-9 chars
+                    if (!/^[a-zA-Z0-9]{6,9}$/.test(value)) {
+                        error = 'Passport must be 6–9 alphanumeric characters.';
+                    }
+                }
+                if (error) {
+                    errorSpan.textContent = error;
+                    errorSpan.style.display = 'block';
+                    input.classList.add('is-invalid');
+                } else {
+                    errorSpan.textContent = '';
+                    errorSpan.style.display = 'none';
+                    input.classList.remove('is-invalid');
+                }
+            }
+        </script>
+
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="email">Email<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <input class="form-control" type="email" name="email" id="email" value="zhihong0321TEST@gmail.com" required placeholder="Email" oninput="validateMainEmail(this)">
+                <span id="main-email-error" class="text-danger d-block" style="display:none;"></span>
+                            </div>
+        </div>
+        <script>
+            function validateMainEmail(input) {
+                const value = input.value.trim();
+                const errorSpan = document.getElementById('main-email-error');
+                let error = '';
+                if (value.length > 0 && !/^([a-zA-Z0-9_\-.+]+)@([a-zA-Z0-9\-.]+)\.([a-zA-Z]{2,})$/.test(value)) {
+                    error = 'Please enter a valid email address.';
+                }
+                if (error) {
+                    errorSpan.textContent = error;
+                    errorSpan.style.display = 'block';
+                    input.classList.add('is-invalid');
+                } else {
+                    errorSpan.textContent = '';
+                    errorSpan.style.display = 'none';
+                    input.classList.remove('is-invalid');
+                }
+            }
+        </script>
+        <hr class="my-6 mx-n4" />
+        <h6 class="mb-4">2. Permanent Address</h6>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="address_line_1">Address line 1<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="address_line_1" id="address_line_1" value="584, JALAN NADA ALAM 4/2, TAMAN NADA ALAM" required placeholder="Address line 1">
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="address_line_2">Address line 2</label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="address_line_2" id="address_line_2" placeholder="Address line 2">
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="address_line_3">Address line 3</label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="address_line_3" id="address_line_3" placeholder="Address line 3">
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="postcode">Postcode<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="postcode" id="postcode" value="71700" required placeholder="Postcode" maxlength="5" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, &quot;&quot;)">
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="town">Town<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="town" id="town" value="NILAI" required placeholder="Town">
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="state">State<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <select class="form-control" name="state" id="state" required><option value>--Select--</option><option value="JOHOR">JOHOR</option><option value="KEDAH">KEDAH</option><option value="KELANTAN">KELANTAN</option><option value="MELAKA">MELAKA</option><option value="NEGERI SEMBILAN" selected="selected">NEGERI SEMBILAN</option><option value="PAHANG">PAHANG</option><option value="PERAK">PERAK</option><option value="PERLIS">PERLIS</option><option value="PULAU PINANG">PULAU PINANG</option><option value="SELANGOR">SELANGOR</option><option value="TERENGGANU">TERENGGANU</option><option value="W.P. KUALA LUMPUR">W.P. KUALA LUMPUR</option><option value="W.P. PUTRAJAYA">W.P. PUTRAJAYA</option></select>
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="phone">Telephone No</label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="phone" id="phone" placeholder="e.g., 0312345678" inputmode="numeric" pattern="[0-9]{10,11}">
+                <div class="form-text text-muted mt-1">
+                    <small>Enter full phone number including area code (e.g., 0312345678)</small>
+                </div>
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="mobile">Mobile No<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="mobile" id="mobile" value="01121000099" required placeholder="e.g., 0123456789" inputmode="numeric" pattern="[0-9]{10,11}">
+                <div class="form-text text-muted mt-1">
+                    <small>Enter full mobile number (e.g., 0123456789)</small>
+                </div>
+                            </div>
+        </div>
+        <hr class="my-6 mx-n4" />
+        <h6 class="mb-4">3. Next of Kin Information</h6>
+
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="contact_salutation">Salutation</label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="contact_salutation" id="contact_salutation" value="MS" placeholder="Salutation">
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="contact_name">Name<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="contact_name" id="contact_name" value="MOO ENG THING" required placeholder="Name">
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="contact_mykad_passport">MyKad/Passport No<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="contact_mykad_passport" id="contact_mykad_passport" value="840127015440" required maxlength="12" placeholder="Enter MyKad (12 digits) or Passport (6-9 chars)" oninput="validateContactMykadPassport(this)">
+                <span id="contact-mykad-passport-error" class="text-danger d-block" style="display:none;"></span>
+                            </div>
+        </div>
+        <script>
+            function validateContactMykadPassport(input) {
+                const value = input.value.trim();
+                const errorSpan = document.getElementById('contact-mykad-passport-error');
+                let error = '';
+                if (/^\d+$/.test(value)) {
+                    // MyKad: must be exactly 12 digits
+                    if (value.length !== 12) {
+                        error = 'MyKad must be exactly 12 digits.';
+                    }
+                } else if (value.length > 0) {
+                    // Passport: alphanumeric, 6-9 chars
+                    if (!/^[a-zA-Z0-9]{6,9}$/.test(value)) {
+                        error = 'Passport must be 6–9 alphanumeric characters.';
+                    }
+                }
+                if (error) {
+                    errorSpan.textContent = error;
+                    errorSpan.style.display = 'block';
+                    input.classList.add('is-invalid');
+                } else {
+                    errorSpan.textContent = '';
+                    errorSpan.style.display = 'none';
+                    input.classList.remove('is-invalid');
+                }
+            }
+        </script>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="contact_citizenship">Citizenship<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <select class="form-control" name="contact_citizenship" id="contact_citizenship" required><option value>--Select--</option><option value="Malaysian" selected="selected">Malaysian</option><option value="Afghan">Afghan</option><option value="Albanian">Albanian</option><option value="Algerian">Algerian</option><option value="American">American</option><option value="Andorran">Andorran</option><option value="Angolan">Angolan</option><option value="Antiguans">Antiguans</option><option value="Argentinean">Argentinean</option><option value="Armenian">Armenian</option><option value="Australian">Australian</option><option value="Austrian">Austrian</option><option value="Azerbaijani">Azerbaijani</option><option value="Bahamian">Bahamian</option><option value="Bahraini">Bahraini</option><option value="Bangladeshi">Bangladeshi</option><option value="Barbadian">Barbadian</option><option value="Barbudans">Barbudans</option><option value="Batswana">Batswana</option><option value="Belarusian">Belarusian</option><option value="Belgian">Belgian</option><option value="Belizean">Belizean</option><option value="Beninese">Beninese</option><option value="Bhutanese">Bhutanese</option><option value="Bolivian">Bolivian</option><option value="Bosnian">Bosnian</option><option value="Brazilian">Brazilian</option><option value="British">British</option><option value="Bruneian">Bruneian</option><option value="Bulgarian">Bulgarian</option><option value="Burkinabe">Burkinabe</option><option value="Burmese">Burmese</option><option value="Burundian">Burundian</option><option value="Cambodian">Cambodian</option><option value="Cameroonian">Cameroonian</option><option value="Canadian">Canadian</option><option value="Cape Verdean">Cape Verdean</option><option value="Central African">Central African</option><option value="Chadian">Chadian</option><option value="Chilean">Chilean</option><option value="Chinese">Chinese</option><option value="Colombian">Colombian</option><option value="Comoran">Comoran</option><option value="Congolese">Congolese</option><option value="Costa Rican">Costa Rican</option><option value="Croatian">Croatian</option><option value="Cuban">Cuban</option><option value="Cypriot">Cypriot</option><option value="Czech">Czech</option><option value="Danish">Danish</option><option value="Djibouti">Djibouti</option><option value="Dominican">Dominican</option><option value="Dutch">Dutch</option><option value="East Timorese">East Timorese</option><option value="Ecuadorean">Ecuadorean</option><option value="Egyptian">Egyptian</option><option value="Emirian">Emirian</option><option value="Equatorial Guinean">Equatorial Guinean</option><option value="Eritrean">Eritrean</option><option value="Estonian">Estonian</option><option value="Ethiopian">Ethiopian</option><option value="Fijian">Fijian</option><option value="Filipino">Filipino</option><option value="Finnish">Finnish</option><option value="French">French</option><option value="Gabonese">Gabonese</option><option value="Gambian">Gambian</option><option value="Georgian">Georgian</option><option value="German">German</option><option value="Ghanaian">Ghanaian</option><option value="Greek">Greek</option><option value="Grenadian">Grenadian</option><option value="Guatemalan">Guatemalan</option><option value="Guinea-Bissauan">Guinea-Bissauan</option><option value="Guinean">Guinean</option><option value="Guyanese">Guyanese</option><option value="Haitian">Haitian</option><option value="Herzegovinian">Herzegovinian</option><option value="Honduran">Honduran</option><option value="Hungarian">Hungarian</option><option value="I-Kiribati">I-Kiribati</option><option value="Icelander">Icelander</option><option value="Indian">Indian</option><option value="Indonesian">Indonesian</option><option value="Iranian">Iranian</option><option value="Iraqi">Iraqi</option><option value="Irish">Irish</option><option value="Israeli">Israeli</option><option value="Italian">Italian</option><option value="Ivorian">Ivorian</option><option value="Jamaican">Jamaican</option><option value="Japanese">Japanese</option><option value="Jordanian">Jordanian</option><option value="Kazakhstani">Kazakhstani</option><option value="Kenyan">Kenyan</option><option value="Kittian and Nevisian">Kittian and Nevisian</option><option value="Kuwaiti">Kuwaiti</option><option value="Kyrgyz">Kyrgyz</option><option value="Laotian">Laotian</option><option value="Latvian">Latvian</option><option value="Lebanese">Lebanese</option><option value="Liberian">Liberian</option><option value="Libyan">Libyan</option><option value="Liechtensteiner">Liechtensteiner</option><option value="Lithuanian">Lithuanian</option><option value="Luxembourger">Luxembourger</option><option value="Macedonian">Macedonian</option><option value="Malagasy">Malagasy</option><option value="Malawian">Malawian</option><option value="Maldivan">Maldivan</option><option value="Malian">Malian</option><option value="Maltese">Maltese</option><option value="Marshallese">Marshallese</option><option value="Mauritanian">Mauritanian</option><option value="Mauritian">Mauritian</option><option value="Mexican">Mexican</option><option value="Micronesian">Micronesian</option><option value="Moldovan">Moldovan</option><option value="Monacan">Monacan</option><option value="Mongolian">Mongolian</option><option value="Moroccan">Moroccan</option><option value="Mosotho">Mosotho</option><option value="Motswana">Motswana</option><option value="Mozambican">Mozambican</option><option value="Namibian">Namibian</option><option value="Nauruan">Nauruan</option><option value="Nepalese">Nepalese</option><option value="Netherlander">Netherlander</option><option value="New Zealander">New Zealander</option><option value="Ni-Vanuatu">Ni-Vanuatu</option><option value="Nicaraguan">Nicaraguan</option><option value="Nigerian">Nigerian</option><option value="Nigerien">Nigerien</option><option value="North Korean">North Korean</option><option value="Northern Irish">Northern Irish</option><option value="Norwegian">Norwegian</option><option value="Omani">Omani</option><option value="Pakistani">Pakistani</option><option value="Palauan">Palauan</option><option value="Panamanian">Panamanian</option><option value="Papua New Guinean">Papua New Guinean</option><option value="Paraguayan">Paraguayan</option><option value="Peruvian">Peruvian</option><option value="Polish">Polish</option><option value="Portuguese">Portuguese</option><option value="Qatari">Qatari</option><option value="Romanian">Romanian</option><option value="Russian">Russian</option><option value="Rwandan">Rwandan</option><option value="Saint Lucian">Saint Lucian</option><option value="Salvadoran">Salvadoran</option><option value="Samoan">Samoan</option><option value="San Marinese">San Marinese</option><option value="Sao Tomean">Sao Tomean</option><option value="Saudi">Saudi</option><option value="Scottish">Scottish</option><option value="Senegalese">Senegalese</option><option value="Serbian">Serbian</option><option value="Seychellois">Seychellois</option><option value="Sierra Leonean">Sierra Leonean</option><option value="Singaporean">Singaporean</option><option value="Slovakian">Slovakian</option><option value="Slovenian">Slovenian</option><option value="Solomon Islander">Solomon Islander</option><option value="Somali">Somali</option><option value="South African">South African</option><option value="South Korean">South Korean</option><option value="Spanish">Spanish</option><option value="Sri Lankan">Sri Lankan</option><option value="Sudanese">Sudanese</option><option value="Surinamer">Surinamer</option><option value="Swazi">Swazi</option><option value="Swedish">Swedish</option><option value="Swiss">Swiss</option><option value="Syrian">Syrian</option><option value="Taiwanese">Taiwanese</option><option value="Tajik">Tajik</option><option value="Tanzanian">Tanzanian</option><option value="Thai">Thai</option><option value="Togolese">Togolese</option><option value="Tongan">Tongan</option><option value="Trinidadian or Tobagonian">Trinidadian or Tobagonian</option><option value="Tunisian">Tunisian</option><option value="Turkish">Turkish</option><option value="Tuvaluan">Tuvaluan</option><option value="Ugandan">Ugandan</option><option value="Ukrainian">Ukrainian</option><option value="Uruguayan">Uruguayan</option><option value="Uzbekistani">Uzbekistani</option><option value="Venezuelan">Venezuelan</option><option value="Vietnamese">Vietnamese</option><option value="Welsh">Welsh</option><option value="Yemenite">Yemenite</option><option value="Zambian">Zambian</option><option value="Zimbabwean">Zimbabwean</option></select>
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="contact_relationship">Relationship<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="contact_relationship" id="contact_relationship" value="WIFE" required placeholder="Relationship">
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="contact_email">Email<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <input class="form-control" type="email" name="contact_email" id="contact_email" value="zhihong0321@gmail.com" required placeholder="Email" oninput="validateContactEmail(this)">
+                <span id="contact-email-error" class="text-danger d-block" style="display:none;"></span>
+                            </div>
+        </div>
+        <script>
+            function validateContactEmail(input) {
+                const value = input.value.trim();
+                const errorSpan = document.getElementById('contact-email-error');
+                let error = '';
+                if (value.length > 0 && !/^([a-zA-Z0-9_\-.+]+)@([a-zA-Z0-9\-.]+)\.([a-zA-Z]{2,})$/.test(value)) {
+                    error = 'Please enter a valid email address.';
+                }
+                if (error) {
+                    errorSpan.textContent = error;
+                    errorSpan.style.display = 'block';
+                    input.classList.add('is-invalid');
+                } else {
+                    errorSpan.textContent = '';
+                    errorSpan.style.display = 'none';
+                    input.classList.remove('is-invalid');
+                }
+            }
+        </script>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="contact_phone">Telephone No</label>
+            <div class="col-sm-9">
+                <input class="form-control is-invalid" type="text" name="contact_phone" id="contact_phone" value="0126039205" placeholder="e.g., 0312345678" inputmode="numeric" pattern="[0-9]*">
+                <div class="form-text text-muted mt-1">
+                    <small>Enter full phone number including area code (e.g., 0312345678)</small>
+                </div>
+                                    <span class="text-danger">The Telephone No format is invalid.</span>
+                            </div>
+        </div>
+        <div class="row mb-4">
+            <label class="col-sm-3 col-form-label" for="contact_mobile">Mobile No<span class="text-danger">*</span></label>
+            <div class="col-sm-9">
+                <input class="form-control" type="text" name="contact_mobile" id="contact_mobile" value="0126039205" required placeholder="e.g., 0123456789" inputmode="numeric" pattern="[0-9]*">
+                <div class="form-text text-muted mt-1">
+                    <small>Enter full mobile number (e.g., 0123456789)</small>
+                </div>
+                            </div>
+        </div>
+        <div class="pt-4">
+            <div class="row justify-content-end">
+                <div class="col-sm-9 text-end">
+                    <button type="submit" class="btn btn-primary me-4">
+                        <i class="fa fa-save me-2"></i>Submit
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <div class="clearfix"></div>
+    </div>
+</div>
+        </form>
+    </div>
+
+				</div>
+				<!-- / Content -->
+
+				<!-- Footer -->
+									<!-- Footer -->
+<footer class="content-footer footer bg-footer-theme position-fixed bottom-0 end-0 shadow-lg rounded-start-3" style="width: auto; z-index: 1000; backdrop-filter: blur(10px); background-color: rgba(255, 255, 255, 0.95);">
+    <div class="px-4 py-3">
+        <div class="footer-container">
+            <div class="text-end">
+                &#169;
+                <script>
+                document.write(new Date().getFullYear());
+                </script>
+                , made with ❤️ by <a href="https://www.seda.gov.my" target="_blank" class="footer-link fw-medium">SEDA Malaysia</a>
+            </div>
+        </div>
+    </div>
+</footer>
+<!--/ Footer-->								<!-- / Footer -->
+				<div class="content-backdrop fade"></div>
+			</div>
+		<!--/ Content wrapper -->
+		</div>
+		<!-- / Layout page -->
+	</div>
+
+			<!-- Overlay -->
+		<div class="layout-overlay layout-menu-toggle"></div>
+	
+	<!-- Drag Target Area To SlideIn Menu On Small Screens -->
+	<div class="drag-target"></div>
+</div>
+
+<!-- / Layout wrapper -->
+  <!--/ Layout Content -->
+
+  
+  
+  
+
+  <!-- Include Scripts -->
+  <!-- $isFront is used to append the front layout scripts only on the front layout otherwise the variable will be blank -->
+  <!-- BEGIN: Vendor JS-->
+
+<link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/jquery-Bou6iJJX.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/jquery-NjmgXMI-.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/_commonjsHelpers-D6-XlEtG.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/jquery-BQXThELV.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/popper-MwzM93Hw.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/bootstrap-DJKADUhV.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/node-waves-DPhnNaCB.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/autocomplete-js-BLOBBNGz.js" /><script type="module" src="https://atap.seda.gov.my/build/assets/jquery-Bou6iJJX.js"></script><script type="module" src="https://atap.seda.gov.my/build/assets/popper-MwzM93Hw.js"></script><script type="module" src="https://atap.seda.gov.my/build/assets/bootstrap-DJKADUhV.js"></script><script type="module" src="https://atap.seda.gov.my/build/assets/node-waves-DPhnNaCB.js"></script><script type="module" src="https://atap.seda.gov.my/build/assets/autocomplete-js-BLOBBNGz.js"></script>
+  <link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/pickr-71-TLRtn.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/_commonjsHelpers-D6-XlEtG.js" /><script type="module" src="https://atap.seda.gov.my/build/assets/pickr-71-TLRtn.js"></script>
+<link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/perfect-scrollbar-D2XDwrzR.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/_commonjsHelpers-D6-XlEtG.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/hammer-DLEdXtvS.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/menu-Cc3Gq5JA.js" /><script type="module" src="https://atap.seda.gov.my/build/assets/perfect-scrollbar-D2XDwrzR.js"></script><script type="module" src="https://atap.seda.gov.my/build/assets/hammer-DLEdXtvS.js"></script><script type="module" src="https://atap.seda.gov.my/build/assets/menu-Cc3Gq5JA.js"></script>
+
+
+<link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/sweetalert2-Dw7Wfvdt.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/_commonjsHelpers-D6-XlEtG.js" /><script type="module" src="https://atap.seda.gov.my/build/assets/sweetalert2-Dw7Wfvdt.js"></script>
+<link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/select2-DpKWvWmx.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/_commonjsHelpers-D6-XlEtG.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/jquery-BQXThELV.js" /><script type="module" src="https://atap.seda.gov.my/build/assets/select2-DpKWvWmx.js"></script>
+
+<link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/moment-Dqohq2CH.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/_commonjsHelpers-D6-XlEtG.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/_commonjs-dynamic-modules-TDtrdbi3.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/flatpickr-BpVSFDNE.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/bootstrap-daterangepicker-C9GmKg2f.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/jquery-BQXThELV.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/jquery-timepicker-BYJ-TDM6.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/pickr-71-TLRtn.js" /><script type="module" src="https://atap.seda.gov.my/build/assets/moment-Dqohq2CH.js"></script><script type="module" src="https://atap.seda.gov.my/build/assets/flatpickr-BpVSFDNE.js"></script><script type="module" src="https://atap.seda.gov.my/build/assets/bootstrap-daterangepicker-C9GmKg2f.js"></script><script type="module" src="https://atap.seda.gov.my/build/assets/jquery-timepicker-BYJ-TDM6.js"></script><script type="module" src="https://atap.seda.gov.my/build/assets/pickr-71-TLRtn.js"></script>
+
+<!-- END: Page Vendor JS-->
+
+<!-- BEGIN: Theme JS-->
+<link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/main-D_2d27iq.js" /><script type="module" src="https://atap.seda.gov.my/build/assets/main-D_2d27iq.js"></script><!-- END: Theme JS-->
+
+<!-- Pricing Modal JS-->
+<!-- END: Pricing Modal JS-->
+
+<!-- BEGIN: Page JS-->
+<!-- END: Page JS-->
+
+<!-- app JS -->
+<link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/app-Bo4reUmX.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/jquery-NjmgXMI-.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/_commonjsHelpers-D6-XlEtG.js" /><link rel="modulepreload" as="script" href="https://atap.seda.gov.my/build/assets/jquery-BQXThELV.js" /><script type="module" src="https://atap.seda.gov.my/build/assets/app-Bo4reUmX.js"></script><!-- END: app JS-->
+
+</body>
+
+</html>

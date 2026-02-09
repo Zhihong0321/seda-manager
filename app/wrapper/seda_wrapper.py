@@ -314,57 +314,33 @@ class SEDAClient:
                 ('_token', token)
             ]
             
-            # Extract registration number for later verification (handles new clean key)
-            reg_no = data.get('ic_number') or data.get('mykad_passport') or data.get('registration_number')
-            
             # Map and add fields to payload
             payload.extend(self._map_profile_data(data))
             
-            logger.info(f"Submitting update for individual {profile_id}. Note: SEDA will assign a new ID.")
+            logger.info(f"Submitting update for individual {profile_id}...")
             response = self.session.post(url, data=payload, headers={'Referer': url})
             self._validate_response(response)
 
-            # SEVERE FIX: SEDA redirects to /profiles on success. 
-            # If it redirects back to /edit, it means there was a validation error.
+            # SEDA redirects to /profiles on success. 
             if "/edit" in response.url:
                 # Try to find the error message in the page
                 error_match = re.search(r'<div class="invalid-feedback">\s*(.*?)\s*</div>', response.text)
-                error_msg = error_match.group(1) if error_match else "Validation failed (check field formats)."
-                
-                # Save the failing page for inspection
-                with open("debug_error.html", "w", encoding="utf-8") as f:
-                    f.write(response.text)
-                
-                logger.error(f"Update failed for {profile_id}: {error_msg}. See debug_error.html for details.")
+                error_msg = error_match.group(1) if error_match else "Validation failed."
+                logger.error(f"Update failed for {profile_id}: {error_msg}")
                 return None
 
-            # If we are at the list page, it's likely a success.
-            if "/profiles" in response.url or "Profile updated successfully" in response.text:
-                logger.info(f"Update submitted for {profile_id}. Verifying new ID...")
+            # Success: Find the new ID that SEDA generated
+            # We must return this because the ID you passed in is now dead in SEDA
+            reg_no = data.get('ic_number') or data.get('mykad_passport') or data.get('registration_number')
+            if reg_no:
+                matches = self.fetch_profile_list(registration_number=reg_no, max_pages=1)
+                if matches:
+                    new_id = matches[0]['id']
+                    logger.info(f"Update successful. New SEDA ID for this record is: {new_id}")
+                    return new_id
 
-                # Search by registration number to find the NEWLY created profile ID
-                if reg_no:
-                    matches = self.fetch_profile_list(registration_number=reg_no, max_pages=3)
-                    if matches:
-                        # Find the highest numeric ID among all matches that is NOT the old ID
-                        try:
-                            sorted_matches = sorted(matches, key=lambda x: int(x['id']), reverse=True)
-                            new_id = sorted_matches[0]['id']
-                            
-                            if new_id == profile_id and len(sorted_matches) > 1:
-                                # If the highest is the old one, maybe the new one is second? 
-                                # Or maybe it hasn't appeared yet.
-                                logger.warning(f"Only found the old ID {profile_id}. New ID might be delayed.")
-                            
-                            logger.info(f"Profile {profile_id} updated. Latest active ID is {new_id}")
-                            return new_id
-                        except (ValueError, KeyError, IndexError):
-                            return matches[0]['id']
-
-                return profile_id # Fallback if we can't find the new one
-
-            return None
-
+            return profile_id # Fallback
+            
         except Exception as e:
             logger.error(f"Update failed for profile {profile_id}: {e}")
             return None
