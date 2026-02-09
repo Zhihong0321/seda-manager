@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Query
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
+import re
 
 router = APIRouter()
 
@@ -51,7 +52,6 @@ async def get_application_by_mykad(mykad: str):
                     desc = item.get("description", "")
                     if desc:
                         # Search for "18X" or "18 x" or "18 panels"
-                        import re
                         match = re.search(r'(\d+)\s*[xX]\s*(?:solar|jinko|panel|tiger)', desc, re.IGNORECASE)
                         if not match:
                              # Broad match for just "18X" at start of line
