@@ -192,6 +192,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
 
+        console.log("SEDA Mapper: Sending fill data:", messageBody.data);
+
         chrome.tabs.sendMessage(tab.id, messageBody, (response) => {
             if (chrome.runtime.lastError) {
                 showStatus("Communication error. Refresh SEDA page.", "error");

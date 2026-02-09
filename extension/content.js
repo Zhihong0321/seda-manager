@@ -151,15 +151,32 @@ function fillSedaForm(data, systemDetails, adminDefaults) {
     }
 
     // 7. Electricity Account Number (Trigger portal AJAX)
-    const tnbInp = document.getElementById('account_number');
+    const tnbInp = document.getElementById('account_number') || document.querySelector('[name="account_number"]');
     if (tnbInp && data.account_number) {
-        console.log("SEDA Mapper: Setting TNB Account and triggering lookup...");
+        console.log("SEDA Mapper: Forcing TNB Account injection:", data.account_number);
         tnbInp.removeAttribute('readonly');
+        tnbInp.removeAttribute('disabled');
 
-        // Sequence: Focus -> Set Value -> Dispatch Input -> Dispatch Change -> Blur
-        // This mimics a real user clicking, typing, and clicking away.
-        setValue(tnbInp, data.account_number);
+        tnbInp.focus();
+        // Mimic real typing to trigger JS listeners
+        try {
+            document.execCommand('selectAll', false, null);
+            document.execCommand('insertText', false, data.account_number);
+        } catch (e) {
+            console.log("execCommand failed, using standard value assignment.");
+            tnbInp.value = data.account_number;
+        }
+
+        // Force lookup triggers
+        tnbInp.dispatchEvent(new Event('input', { bubbles: true }));
+        tnbInp.dispatchEvent(new Event('change', { bubbles: true }));
+        tnbInp.dispatchEvent(new Event('blur', { bubbles: true }));
+
         fieldsFilled++;
+        applyHighlight(tnbInp, "green");
+    } else {
+        if (!tnbInp) console.warn("SEDA Mapper: Could not find element with ID 'account_number'");
+        if (!data.account_number) console.warn("SEDA Mapper: No account_number found in data packet:", data);
     }
 
     return { filled: fieldsFilled };
