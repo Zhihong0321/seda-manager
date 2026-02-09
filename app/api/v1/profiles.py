@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from app.wrapper.seda_wrapper import SEDAClient
-from app.models.profiles import ProfileBase, ProfileUpdate
+from app.models.profiles import ProfileBase, ProfileUpdate, ProfileCreateResponse
 from typing import List, Optional
 
 router = APIRouter()
@@ -77,20 +77,28 @@ async def get_profile_details(profile_id: str, client: SEDAClient = Depends(get_
     # Note: Logic currently assumes individuals as per research.
     return client.fetch_individual_details(profile_id)
 
-@router.post("/", response_model=dict)
+
+@router.post("/", response_model=ProfileCreateResponse)
 async def create_profile(
     payload: ProfileUpdate,
     client: SEDAClient = Depends(get_client)
 ):
-    """Create a new individual profile."""
+    """
+    Create a new individual profile on the SEDA portal.
+    
+    Returns the **profile_id** and **success** status.
+    """
     result = client.create_individual_profile(payload.model_dump())
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error", "Failed to create profile"))
-    return {
-        "message": "Profile created successfully",
-        "profile_id": result["profile_id"],
-        "redirect_url": result["redirect_url"]
-    }
+    
+    return ProfileCreateResponse(
+        success=True,
+        profile_id=result["profile_id"],
+        message=result.get("message", "Profile created successfully"),
+        redirect_url=result["redirect_url"]
+    )
+
 
 @router.put("/{profile_id}")
 async def update_profile(

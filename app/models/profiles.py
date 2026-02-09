@@ -11,11 +11,14 @@ class ProfileBase(BaseModel):
     url: str
 
 class ProfileUpdate(BaseModel):
-    """Data required to update an individual profile."""
-    salutation: str
+    """
+    Data required to create/update an individual profile.
+    Fields and naming strictly match the SEDA eATAP portal POST structure.
+    """
+    salutation: str # Expects "MR.", "MS.", etc.
     name: str
-    citizenship: str
-    mykad_passport: str
+    citizenship: str # Expects "Malaysian" or other country labels
+    mykad_passport: str # Numbers only, no dashes
     email: str
     address_line_1: str
     address_line_2: Optional[str] = ""
@@ -33,3 +36,10 @@ class ProfileUpdate(BaseModel):
     contact_email: str
     contact_phone: Optional[str] = ""
     contact_mobile: str
+
+class ProfileCreateResponse(BaseModel):
+    """Response returned after attempting to create a profile."""
+    success: bool
+    profile_id: Optional[str] = Field(None, description="The newly created individual profile ID")
+    message: str
+    redirect_url: Optional[str] = Field(None, description="The URL of the profile in the SEDA portal")
