@@ -76,12 +76,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadSettings();
 
     // --- Helper to check if content script is ready ---
-    async function ensureContentScriptReady(tabId) {
+    async function ensureContentScriptReady(tabId, url) {
+        if (!url || (!url.includes("applications/") && !url.includes("profiles/"))) {
+            return { ready: false, reason: "NOT_FORM_PAGE" };
+        }
         try {
             const response = await chrome.tabs.sendMessage(tabId, { action: "ping" }).catch(() => null);
-            return !!response;
+            if (response) return { ready: true };
+            return { ready: false, reason: "SCRIPT_MISSING" };
         } catch (e) {
-            return false;
+            return { ready: false, reason: "ERROR", detail: e.message };
         }
     }
 
@@ -90,8 +94,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             if (tab && tab.url && tab.url.includes("atap.seda.gov.my")) {
-                const isReady = await ensureContentScriptReady(tab.id);
-                if (!isReady) return;
+                const status = await ensureContentScriptReady(tab.id, tab.url);
+                if (!status.ready) return;
 
                 chrome.tabs.sendMessage(tab.id, { action: "getMyKad" }, (response) => {
                     if (chrome.runtime.lastError) return;
@@ -151,9 +155,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-        const isReady = await ensureContentScriptReady(tab.id);
-        if (!isReady) {
-            showStatus("Please REFRESH the SEDA page first.", "error");
+        const status = await ensureContentScriptReady(tab.id, tab.url);
+        if (!status.ready) {
+            if (status.reason === "NOT_FORM_PAGE") {
+                showStatus("Please go to a SEDA Application/Profile form page (Create or Edit).", "error");
+            } else {
+                showStatus("Connection Lost. Please REFRESH the SEDA browser page.", "error");
+            }
             fillBtn.disabled = false;
             return;
         }

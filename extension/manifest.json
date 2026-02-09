@@ -18,10 +18,8 @@
     "content_scripts": [
         {
             "matches": [
-                "https://atap.seda.gov.my/applications/individuals/*/create",
-                "https://atap.seda.gov.my/applications/individuals/*/edit",
-                "https://atap.seda.gov.my/profiles/individuals/*/create",
-                "https://atap.seda.gov.my/profiles/individuals/*/edit"
+                "https://atap.seda.gov.my/applications/*",
+                "https://atap.seda.gov.my/profiles/*"
             ],
             "js": [
                 "content.js"
