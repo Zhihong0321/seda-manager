@@ -89,6 +89,7 @@ async def get_application_by_mykad(mykad: str):
             "capacity_peak": str(kwp) if kwp > 0 else "",      # Installed Capacity (kWp)
             "annual_energy_generation": str(annual_gen) if annual_gen > 0 else "", # Estimated Annual Energy Generation
             "project_status": "NEW_INSTALLATION", # Always New Installation
+            "building_type_id": "1", # Always House
             "installation_type": "Rooftop of Building", 
             "distribution_licence_id": "2", # TNB
             "tariff_category_id": "1" if registration.get("phase_type") == "Single Phase" else "2",
