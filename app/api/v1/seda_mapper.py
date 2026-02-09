@@ -102,7 +102,14 @@ async def get_application_by_mykad(mykad: str):
             "panel_qty": panel_qty,
             "calculated_kwp": kwp,
             "calculated_gen": annual_gen,
-            "tnb_account": registration.get("tnb_account_no")
+            "tnb_account": registration.get("tnb_account_no"),
+            "module_details": {
+                "brand": "21", # JINKO SOLAR
+                "type": "123", # MONOCRYSTALLINE
+                "model": package.get("package_name") if package else (invoice.get("package_name_snapshot") if invoice else "Jinko Tiger Neo"),
+                "capacity": "620",
+                "quantity": panel_qty
+            }
         }
         
         return {

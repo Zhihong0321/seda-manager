@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusDiv = document.getElementById('status');
     const previewDiv = document.getElementById('data-preview');
 
-    let fetchedData = null;
+    let allResultData = null;
 
     // Auto-detect MyKad
     async function autoDetect() {
@@ -37,13 +37,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        showStatus("Connecting to " + SERVER_BASE + "...", "");
+        showStatus("Connecting to Railway...", "");
         fetchBtn.disabled = true;
 
         try {
             const url = `${SERVER_BASE}/api/v1/mapper/by-mykad/${mykad}`;
-            console.log("Fetching from:", url);
-
             const response = await fetch(url, {
                 method: 'GET',
                 mode: 'cors',
@@ -55,32 +53,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error(errorData.detail || `Server Error (${response.status})`);
             }
 
-            const result = await response.json();
-            fetchedData = result.mapped_to_seda;
-            const systemDetails = result.system_details;
+            allResultData = await response.json();
 
-            showPreview(fetchedData, systemDetails);
+            showPreview(allResultData.mapped_to_seda, allResultData.system_details);
             showStatus("Data synced from SEDA DB!", "success");
             fillBtn.disabled = false;
         } catch (err) {
             console.error("Fetch error:", err);
-            let msg = err.message;
-            if (msg === "Failed to fetch") {
-                msg = "Failed to fetch (Check if local server is running on port 8000)";
-            }
-            showStatus("Error: " + msg, "error");
+            showStatus("Error: " + err.message, "error");
         } finally {
             fetchBtn.disabled = false;
         }
     });
 
     fillBtn.addEventListener('click', async () => {
-        if (!fetchedData) return;
+        if (!allResultData) return;
         fillBtn.disabled = true;
-        showStatus("Mapping data...", "");
+        showStatus("Mapping data & Adding Modules...", "");
 
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        chrome.tabs.sendMessage(tab.id, { action: "fillForm", data: fetchedData }, (response) => {
+
+        // Send the WHOLE result including module_details
+        const messageBody = {
+            action: "fillForm",
+            data: {
+                mapped_to_seda: allResultData.mapped_to_seda,
+                module_details: allResultData.system_details.module_details
+            }
+        };
+
+        chrome.tabs.sendMessage(tab.id, messageBody, (response) => {
             if (chrome.runtime.lastError) {
                 showStatus("Communication error. Refresh SEDA page.", "error");
             } else if (response && response.success) {
@@ -105,9 +107,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="font-weight:700; font-size:12px; color:var(--primary); margin-bottom:6px;">SYSTEM DETAILS</div>
                     <div class="data-item"><span class="data-label">Invoice:</span> <span>${details.invoice_no || 'N/A'}</span></div>
                     <div class="data-item"><span class="data-label">Package:</span> <span>${details.package_name || 'N/A'}</span></div>
-                    <div class="data-item"><span class="data-label">Panel Qty (620W):</span> <span style="font-weight:bold; color:var(--accent)">${details.panel_qty || '0'}</span></div>
+                    <div class="data-item" style="color:var(--accent); font-weight:bold;"><span class="data-label">Solar Module:</span> <span>JINKO 620W</span></div>
+                    <div class="data-item"><span class="data-label">Panel Qty:</span> <span style="font-weight:bold; color:var(--accent)">${details.panel_qty || '0'}</span></div>
                     <div class="data-item"><span class="data-label">System Size:</span> <span style="font-weight:bold; color:var(--primary)">${details.calculated_kwp || '0'} kWp</span></div>
-                    <div class="data-item"><span class="data-label">Est. Generation:</span> <span>${details.calculated_gen || '0'} MWh/yr</span></div>
                     <div class="data-item" style="margin-top:4px; border-top:1px dotted #ccc; padding-top:4px;"><span class="data-label">TNB Account:</span> <span style="color:var(--primary)">${details.tnb_account || 'Missing'}</span></div>
                 </div>
             `;
