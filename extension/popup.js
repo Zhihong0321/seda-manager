@@ -219,6 +219,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="data-item"><span class="data-label">Package:</span> <span>${details.package_name || 'N/A'}</span></div>
                     <div class="data-item"><span class="data-label">Panel Qty:</span> <span style="font-weight:bold; color:var(--accent)">${details.panel_qty || '0'}</span></div>
                     <div class="data-item"><span class="data-label">System Size:</span> <span style="font-weight:bold; color:var(--primary)">${details.calculated_kwp || '0'} kWp</span></div>
+                    <div class="data-item"><span class="data-label">TNB Account:</span> <span style="font-weight:bold; color:var(--success)">${data.account_number || 'N/A'}</span></div>
                 </div>
             `;
             previewDiv.innerHTML += detailsHtml;

@@ -142,6 +142,14 @@ function fillSedaForm(data, systemDetails, adminDefaults) {
         fieldsFilled++;
     }
 
+    // 7. Electricity Account Number
+    const tnbInp = document.getElementById('account_number');
+    if (tnbInp && data.account_number) {
+        tnbInp.removeAttribute('readonly');
+        setValue(tnbInp, data.account_number);
+        fieldsFilled++;
+    }
+
     return { filled: fieldsFilled };
 }
 

@@ -84,7 +84,7 @@ async def get_application_by_mykad(mykad: str):
 
         # Map DB fields to SEDA Portal Input Names (Step 2: Application Details)
         mapped_data = {
-            "account_number": registration.get("tnb_account_no"),
+            "account_number": str(registration.get("tnb_account_no") or ""),
             "capacity": str(kwac) if kwac > 0 else "",           # Installed Capacity (kWac)
             "capacity_peak": str(kwp) if kwp > 0 else "",      # Installed Capacity (kWp)
             "annual_energy_generation": str(annual_gen) if annual_gen > 0 else "", # Estimated Annual Energy Generation
