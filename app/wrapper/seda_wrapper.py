@@ -2,6 +2,7 @@ import requests
 import json
 import re
 import os
+import html as _html
 from typing import List, Dict, Optional
 from app.core.config import SEDA_BASE_URL, USER_AGENT, COOKIES_PATH, logger
 
@@ -308,3 +309,197 @@ class SEDAClient:
         except Exception as e:
             logger.error(f"Update failed for profile {profile_id}: {e}")
             return None
+
+    def _extract_form_by_action(self, html: str, action_substring: str) -> str:
+        """
+        Returns the first <form>...</form> block whose action contains action_substring.
+        This is intentionally lightweight (regex-based) to avoid extra deps.
+        """
+        sub = re.escape(action_substring)
+        patterns = [
+            r'(<form\b[^>]*\baction="[^"]*' + sub + r'[^"]*"[^>]*>[\s\S]*?</form>)',
+            r"(<form\b[^>]*\baction='[^']*" + sub + r"[^']*'[^>]*>[\s\S]*?</form>)",
+            r'(<form\b[^>]*\baction=[^\s>]*' + sub + r'[^\s>]*[^>]*>[\s\S]*?</form>)',
+        ]
+        for pat in patterns:
+            m = re.search(pat, html, flags=re.IGNORECASE)
+            if m:
+                return m.group(1)
+
+        raise SEDAParsingError(f"Form not found for action containing: {action_substring}")
+
+    def _parse_form_successful_controls(self, form_html: str) -> List[tuple]:
+        """
+        Parse "successful controls" from a form (approximation of browser submission rules).
+        Returns a list of (name, value) tuples; preserves duplicates and order.
+        """
+        # Drop inert/template/script content that can contain placeholder inputs not actually submitted.
+        form_html = re.sub(r'<!--[\s\S]*?-->', '', form_html, flags=re.IGNORECASE)
+        form_html = re.sub(r'<template\b[\s\S]*?</template>', '', form_html, flags=re.IGNORECASE)
+        form_html = re.sub(r'<script\b[\s\S]*?</script>', '', form_html, flags=re.IGNORECASE)
+
+        # Attribute parser: supports key="value", key='value', key=value, and boolean attrs.
+        attr_re = re.compile(
+            r"([:\w-]+)(?:\s*=\s*(?:\"([^\"]*)\"|'([^']*)'|([^\s\"'=<>`]+)))?",
+            re.IGNORECASE,
+        )
+
+        def parse_attrs(tag: str) -> Dict[str, str]:
+            attrs: Dict[str, str] = {}
+            s = tag.strip()
+            # If we got a full tag like "<input ...>", drop angle brackets + tag name.
+            if s.startswith("<") and s.endswith(">"):
+                inner = s[1:-1].strip()
+                parts = inner.split(None, 1)
+                s = parts[1] if len(parts) > 1 else ""
+
+            for k, v1, v2, v3 in attr_re.findall(s):
+                key = k.lower()
+                val = v1 or v2 or v3
+                # Boolean attributes appear with no value; store as empty string but keep presence.
+                attrs[key] = "" if val is None else val
+            return attrs
+
+        controls: List[tuple] = []
+
+        # Inputs
+        for tag in re.findall(r'<input\b[^>]*>', form_html, flags=re.IGNORECASE):
+            attrs = parse_attrs(tag)
+            name = attrs.get("name")
+            if not name or "disabled" in attrs:
+                continue
+            t = (attrs.get("type") or "text").lower()
+            if t in ("submit", "button", "image", "reset", "file"):
+                continue
+            if t in ("checkbox", "radio") and "checked" not in attrs:
+                continue
+            value = attrs.get("value", "")
+            if t in ("checkbox", "radio") and value == "":
+                value = "on"
+            controls.append((name, _html.unescape(value)))
+
+        # Textareas
+        for attr_str, body in re.findall(r'<textarea\b([^>]*)>([\s\S]*?)</textarea>', form_html, flags=re.IGNORECASE):
+            attrs = parse_attrs(attr_str)
+            name = attrs.get("name")
+            if not name or "disabled" in attrs:
+                continue
+            controls.append((name, _html.unescape(body)))
+
+        # Selects
+        for select_attr, options_html in re.findall(r'<select\b([^>]*)>([\s\S]*?)</select>', form_html, flags=re.IGNORECASE):
+            attrs = parse_attrs(select_attr)
+            name = attrs.get("name")
+            if not name or "disabled" in attrs:
+                continue
+
+            multiple = "multiple" in attrs
+            option_tags = re.findall(r'<option\b[^>]*>', options_html, flags=re.IGNORECASE)
+
+            selected_vals: List[str] = []
+            for opt_tag in option_tags:
+                opt_attrs = parse_attrs(opt_tag)
+                if "selected" in opt_attrs:
+                    selected_vals.append(_html.unescape(opt_attrs.get("value", "")))
+
+            # If nothing explicitly selected and not multiple, browsers submit first option's value.
+            if not selected_vals and not multiple and option_tags:
+                first_attrs = parse_attrs(option_tags[0])
+                selected_vals = [_html.unescape(first_attrs.get("value", ""))]
+
+            if multiple:
+                for v in selected_vals:
+                    controls.append((name, v))
+            else:
+                selected = selected_vals[0] if selected_vals else ""
+                # If a required select is currently empty, the portal UI would normally block submit.
+                # In practice these are often conditional fields (hidden/disabled by JS), so omit them.
+                if "required" in attrs and not selected:
+                    continue
+                controls.append((name, selected))
+
+        return controls
+
+    def update_application(self, application_id: str, updates: Dict) -> Dict:
+        """
+        Updates an application by replicating the browser form submit behavior.
+
+        Portal behavior (from UPDATE-APPLICATION.har):
+        - POST to /applications/{id}/edit
+        - Include _method=PUT (Laravel method spoofing)
+        - Include CSRF _token
+        - Send application/x-www-form-urlencoded form fields (many of them)
+        """
+        url = f"{SEDA_BASE_URL}/applications/{application_id}/edit"
+        logger.info(f"Updating application {application_id} via {url}")
+
+        # Single GET: obtain CSRF token + current form fields so we can do partial updates safely.
+        r = self.session.get(url, timeout=30)
+        self._validate_response(r)
+
+        token_match = re.search(r'name="_token" value="([^"]+)"', r.text)
+        if not token_match:
+            raise SEDAParsingError(f"CSRF token not found at {url}")
+        token = token_match.group(1)
+
+        form = self._extract_form_by_action(r.text, f"/applications/{application_id}/edit")
+        fields = self._parse_form_successful_controls(form)
+
+        # Build payload: method spoofing + double token (matches portal patterns seen in other forms).
+        payload: List[tuple] = [('_method', 'PUT'), ('_token', token), ('_token', token)]
+        for k, v in fields:
+            if k in ('_method', '_token'):
+                continue
+            payload.append((k, v))
+
+        # Apply updates: replace all occurrences of the field name (duplicates exist in the portal).
+        if updates:
+            for key, val in updates.items():
+                sval = "" if val is None else str(val)
+                replaced = False
+                new_payload: List[tuple] = []
+                for k, v in payload:
+                    if k == key and k not in ('_method', '_token'):
+                        new_payload.append((k, sval))
+                        replaced = True
+                    else:
+                        new_payload.append((k, v))
+                if not replaced:
+                    new_payload.append((key, sval))
+                payload = new_payload
+
+        response = self.session.post(
+            url,
+            data=payload,
+            headers={'Referer': url},
+            allow_redirects=True,
+            timeout=30
+        )
+        self._validate_response(response)
+
+        # Heuristic success signal: portal usually lands on supporting documents after save.
+        success = f"/applications/{application_id}/supporting_documents" in response.url
+
+        if not success:
+            # Try to surface validation errors if present.
+            error_msgs = []
+            error_msgs.extend(re.findall(
+                r'<span class="invalid-feedback" role="alert">[\\s\\S]*?<strong>(.*?)</strong>',
+                response.text
+            ))
+            error_msgs.extend(re.findall(
+                r'alert alert-danger[\\s\\S]*?>(.*?)</div>',
+                response.text,
+                re.DOTALL
+            ))
+            error_msgs.extend(re.findall(r'toastr\\.error\\(\"(.*?)\"', response.text))
+            if error_msgs:
+                clean = [re.sub(r'<[^>]+>', '', e).strip() for e in error_msgs if e and e.strip()]
+                return {"success": False, "application_id": application_id, "error": ", ".join(sorted(set(clean)))}
+
+        return {
+            "success": bool(success),
+            "application_id": application_id,
+            "final_url": response.url,
+            "redirect_chain": [h.headers.get("Location") for h in response.history],
+        }

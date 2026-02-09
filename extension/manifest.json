@@ -1,0 +1,31 @@
+{
+    "manifest_version": 3,
+    "name": "SEDA Application Mapper",
+    "version": "1.0.0",
+    "description": "Fills SEDA application forms using data from your local system.",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage"
+    ],
+    "host_permissions": [
+        "https://atap.seda.gov.my/*",
+        "https://seda-manager-production.up.railway.app/*"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://atap.seda.gov.my/applications/individuals/*/create",
+                "https://atap.seda.gov.my/applications/individuals/*/edit",
+                "https://atap.seda.gov.my/profiles/individuals/*/create",
+                "https://atap.seda.gov.my/profiles/individuals/*/edit"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ]
+}

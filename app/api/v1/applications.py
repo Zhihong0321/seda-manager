@@ -254,3 +254,29 @@ async def get_application_raw_html(application_id: str):
         raise HTTPException(status_code=401, detail="Session expired. Please update cookies.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get application: {str(e)}")
+
+
+@router.put("/{application_id}")
+async def update_application(application_id: str, updates: Dict[str, Any]):
+    """
+    Update an application by submitting the same form update the portal uses:
+    POST /applications/{id}/edit with _method=PUT and CSRF token.
+
+    `updates` is a partial dict of field -> value. The wrapper will:
+    - GET the edit page
+    - scrape current form fields
+    - merge your updates
+    - submit the update
+    """
+    try:
+        client = SEDAClient()
+        result = client.update_application(application_id, updates)
+        if not result.get("success"):
+            raise HTTPException(status_code=400, detail=result.get("error", "Update failed"))
+        return result
+    except SEDASessionExpired:
+        raise HTTPException(status_code=401, detail="Session expired. Please update cookies.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update application: {str(e)}")

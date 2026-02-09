@@ -2,7 +2,8 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from app.api.v1 import profiles, applications
+from fastapi.middleware.cors import CORSMiddleware
+from app.api.v1 import profiles, applications, seda_mapper
 from app.dashboard import routes as dashboard
 from app.wrapper.seda_wrapper import SEDASessionExpired, SEDAException
 from app.core.config import APP_NAME, logger
@@ -11,6 +12,15 @@ app = FastAPI(
     title=APP_NAME,
     description="Refined Wrapper API for SEDA Malaysia",
     version="1.1.0"
+)
+
+# Enable CORS for the Chrome Extension
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Since it's a browser extension, origins are unique/dynamic
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Global Exception Handlers
@@ -37,6 +47,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(profiles.router, prefix="/api/v1/profiles", tags=["Profiles"])
 app.include_router(applications.router, prefix="/api/v1/applications", tags=["Applications"])
+app.include_router(seda_mapper.router, prefix="/api/v1/mapper", tags=["Mapper"])
 
 @app.get("/api/v1/health")
 async def health_check():
