@@ -47,24 +47,38 @@ async def get_application_by_mykad(mykad: str):
         cur.close()
         conn.close()
         
+        # --- Calculations ---
+        # Panel Quantity logic (Invoice priority, then Package)
+        panel_qty = (invoice.get("panel_qty") if invoice else 0) or (package.get("panel_qty") if package else 0) or 0
+        
+        # kWp calculation: qty * 620w / 1000
+        kwp = round((panel_qty * 620) / 1000, 4)
+        
+        # kWac logic: map same kwp value to kwac field
+        kwac = kwp 
+        
+        # Annual generation formula: kwp * 30 * 3.4 * 12 / 1000 = x MWh/year
+        annual_gen = round((kwp * 30 * 3.4 * 12) / 1000, 2)
+
         # Map DB fields to SEDA Portal Input Names (Step 2: Application Details)
-        # Note: We prioritize data from the registration record, then invoice/package
         mapped_data = {
             "account_number": registration.get("tnb_account_no"),
-            "capacity": str(registration.get("inverter_kwac") or ""),
-            "capacity_peak": str(registration.get("system_size_in_form_kwp") or ""),
-            "installation_type": "Rooftop of Building", # Default
+            "capacity": str(kwac) if kwac > 0 else "",           # Installed Capacity (kWac)
+            "capacity_peak": str(kwp) if kwp > 0 else "",      # Installed Capacity (kWp)
+            "annual_energy_generation": str(annual_gen) if annual_gen > 0 else "", # Estimated Annual Energy Generation
+            "installation_type": "Rooftop of Building", 
             "distribution_licence_id": "2", # TNB
             "tariff_category_id": "1" if registration.get("phase_type") == "Single Phase" else "2",
         }
 
-        # Enrich with invoice/package data for the UI
+        # Enrich for the UI display
         system_details = {
             "invoice_no": invoice.get("invoice_id") if invoice else None,
-            "total_amount": float(invoice.get("total_amount") or 0) if invoice else 0,
-            "package_name": package.get("package_name") if package else invoice.get("package_name_snapshot"),
-            "panel_qty": invoice.get("panel_qty") or (package.get("panel_qty") if package else None),
-            "panel_rating": invoice.get("panel_rating") or (package.get("panel") if package else None), # package.panel might be the rating
+            "package_name": package.get("package_name") if package else (invoice.get("package_name_snapshot") if invoice else None),
+            "panel_qty": panel_qty,
+            "calculated_kwp": kwp,
+            "calculated_gen": annual_gen,
+            "tnb_account": registration.get("tnb_account_no")
         }
         
         return {

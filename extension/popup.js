@@ -105,8 +105,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="font-weight:700; font-size:12px; color:var(--primary); margin-bottom:6px;">SYSTEM DETAILS</div>
                     <div class="data-item"><span class="data-label">Invoice:</span> <span>${details.invoice_no || 'N/A'}</span></div>
                     <div class="data-item"><span class="data-label">Package:</span> <span>${details.package_name || 'N/A'}</span></div>
-                    <div class="data-item"><span class="data-label">Panel Qty:</span> <span style="font-weight:bold; color:var(--accent)">${details.panel_qty || 'N/A'}</span></div>
-                    <div class="data-item"><span class="data-label">Amount:</span> <span>${details.total_amount ? 'RM ' + details.total_amount : 'N/A'}</span></div>
+                    <div class="data-item"><span class="data-label">Panel Qty (620W):</span> <span style="font-weight:bold; color:var(--accent)">${details.panel_qty || '0'}</span></div>
+                    <div class="data-item"><span class="data-label">System Size:</span> <span style="font-weight:bold; color:var(--primary)">${details.calculated_kwp || '0'} kWp</span></div>
+                    <div class="data-item"><span class="data-label">Est. Generation:</span> <span>${details.calculated_gen || '0'} MWh/yr</span></div>
+                    <div class="data-item" style="margin-top:4px; border-top:1px dotted #ccc; padding-top:4px;"><span class="data-label">TNB Account:</span> <span style="color:var(--primary)">${details.tnb_account || 'Missing'}</span></div>
                 </div>
             `;
             previewDiv.innerHTML += detailsHtml;
