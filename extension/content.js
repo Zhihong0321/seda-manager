@@ -5,7 +5,10 @@
 console.log("SEDA Mapper: Content script loaded.");
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "fillForm") {
+    // Add ping handler to verify connection
+    if (request.action === "ping") {
+        sendResponse({ success: true, message: "pong" });
+    } else if (request.action === "fillForm") {
         const { mapped_to_seda, module_details } = request.data;
         const stats = fillSedaForm(mapped_to_seda, module_details);
         sendResponse({ success: true, stats: stats });
@@ -42,7 +45,6 @@ function fillSedaForm(data, moduleDetails) {
     if (moduleDetails && moduleDetails.quantity > 0) {
         const addModuleBtn = document.getElementById('add-module');
         if (addModuleBtn) {
-            // Check if a module row already exists (SEDA often renders one empty or we might have clicked it)
             let moduleRow = document.querySelector('.module-row');
             if (!moduleRow) {
                 addModuleBtn.click();
@@ -50,8 +52,6 @@ function fillSedaForm(data, moduleDetails) {
             }
 
             if (moduleRow) {
-                // SEDA uses dynamic indices like modules[0][equipment_id]
-                // We find them by looking for the row elements
                 const brandSel = moduleRow.querySelector('select[name^="modules"][name$="[equipment_id]"]');
                 const typeSel = moduleRow.querySelector('select[name^="modules"][name$="[module_type_id]"]');
                 const modelInp = moduleRow.querySelector('input[name^="modules"][name$="[model]"]');
@@ -66,7 +66,6 @@ function fillSedaForm(data, moduleDetails) {
 
                 fieldsFilled += 5;
 
-                // Highlight the whole row
                 moduleRow.style.backgroundColor = "rgba(147, 51, 234, 0.1)";
                 moduleRow.style.outline = "2px solid #9333ea";
             }
@@ -77,6 +76,7 @@ function fillSedaForm(data, moduleDetails) {
 }
 
 function setValue(element, value) {
+    if (!element) return;
     if (element.tagName === "SELECT") {
         element.value = value;
         element.dispatchEvent(new Event('change', { bubbles: true }));

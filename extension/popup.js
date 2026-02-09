@@ -13,12 +13,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let allResultData = null;
 
+    // Helper to check if content script is ready
+    async function ensureContentScriptReady(tabId) {
+        try {
+            const response = await chrome.tabs.sendMessage(tabId, { action: "ping" }).catch(() => null);
+            return !!response;
+        } catch (e) {
+            return false;
+        }
+    }
+
     // Auto-detect MyKad
     async function autoDetect() {
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            if (tab && tab.url.includes("atap.seda.gov.my")) {
+            if (tab && tab.url && tab.url.includes("atap.seda.gov.my")) {
+                const isReady = await ensureContentScriptReady(tab.id);
+                if (!isReady) {
+                    console.warn("SEDA Mapper: Content script not ready on this page yet.");
+                    return;
+                }
+
                 chrome.tabs.sendMessage(tab.id, { action: "getMyKad" }, (response) => {
+                    if (chrome.runtime.lastError) {
+                        console.log("Auto-detect suppressed error:", chrome.runtime.lastError.message);
+                        return;
+                    }
                     if (response && response.mykad) {
                         appIdInput.value = response.mykad;
                         showStatus("Auto-detected MyKad: " + response.mykad, "success");
@@ -73,7 +93,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-        // Send the WHOLE result including module_details
+        const isReady = await ensureContentScriptReady(tab.id);
+        if (!isReady) {
+            showStatus("Cant connect to SEDA page. Please REFRESH the SEDA page.", "error");
+            fillBtn.disabled = false;
+            return;
+        }
+
         const messageBody = {
             action: "fillForm",
             data: {
