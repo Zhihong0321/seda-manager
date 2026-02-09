@@ -17,14 +17,20 @@ async def list_profiles(
 ):
     """
     Retrieve client profiles from the SEDA portal with pagination.
-    
-    - **skip**: Number of profiles to skip (for pagination)
-    - **limit**: Maximum number of profiles to return (default: 100, max: 500)
+    Now supports multi-page fetching from SEDA.
     """
-    all_profiles = client.fetch_profile_list()
+    # Calculate how many pages we need to fetch to satisfy the request
+    # SEDA returns 10 per page.
+    required_profiles = skip + limit
+    max_pages = (required_profiles + 9) // 10
+    
+    # Cap at 50 pages (500 profiles) to prevent excessive requests
+    max_pages = min(max_pages, 50)
+    
+    all_profiles = client.fetch_profile_list(max_pages=max_pages)
     total = len(all_profiles)
     
-    # Apply pagination
+    # Apply local pagination on the fetched set
     paginated_profiles = all_profiles[skip:skip + limit]
     
     return {
@@ -37,29 +43,31 @@ async def list_profiles(
 
 @router.get("/search")
 async def search_profile(
-    name: str,
+    name: Optional[str] = Query(None, description="Search by name"),
+    registration_number: Optional[str] = Query(None, description="Search by MyKad/Passport/Company registration"),
+    profile_type: Optional[str] = Query(None, alias="type", description="Filter by type (individual/company)"),
     skip: int = Query(0, ge=0, description="Number of profiles to skip"),
     limit: int = Query(100, ge=1, le=500, description="Number of profiles to return"),
     client: SEDAClient = Depends(get_client)
 ):
     """
-    Search for profiles by name (partial match, case-insensitive).
-    
-    - **name**: Search keyword (partial match)
-    - **skip**: Number of profiles to skip (for pagination)
-    - **limit**: Maximum number of profiles to return
+    Search for profiles using SEDA's server-side multi-field filter.
     """
-    profiles = client.fetch_profile_list()
-    
-    # Case-insensitive partial match
-    matches = [p for p in profiles if name.strip().upper() in p['name'].strip().upper()]
+    # Use SEDA's server-side search parameters for better accuracy and performance
+    # Fetch up to 5 pages of search results (50 matches)
+    matches = client.fetch_profile_list(
+        search=name, 
+        registration_number=registration_number, 
+        profile_type=profile_type,
+        max_pages=5
+    )
     
     total = len(matches)
     
     if not matches:
-        raise HTTPException(status_code=404, detail=f"No profiles found matching '{name}'.")
+        raise HTTPException(status_code=404, detail="No profiles found matching the search criteria.")
     
-    # Apply pagination
+    # Apply pagination on the search results
     paginated_matches = matches[skip:skip + limit]
     
     return {
@@ -67,10 +75,13 @@ async def search_profile(
         "total": total,
         "skip": skip,
         "limit": limit,
-        "search_term": name,
+        "criteria": {
+            "name": name,
+            "registration_number": registration_number,
+            "type": profile_type
+        },
         "profiles": paginated_matches
     }
-
 @router.get("/{profile_id}")
 async def get_profile_details(profile_id: str, client: SEDAClient = Depends(get_client)):
     """Retrieve detailed form information for a specific individual profile."""

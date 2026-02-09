@@ -69,35 +69,62 @@ class SEDAClient:
         
         return match.group(1)
 
-    def fetch_profile_list(self) -> List[Dict]:
-        """Scrapes the client profile list from the portal."""
-        url = f"{SEDA_BASE_URL}/profiles"
-        logger.info("Fetching client profiles...")
-        
-        response = self.session.get(url)
-        self._validate_response(response)
-
+    def fetch_profile_list(self, search: Optional[str] = None, registration_number: Optional[str] = None, profile_type: Optional[str] = None, max_pages: int = 5) -> List[Dict]:
+        """
+        Scrapes the client profile list from the portal.
+        Supports server-side search and multi-page fetching.
+        """
         profiles = []
-        # Pattern to extract ID, Type, Name, and Reg No from table rows
-        row_pattern = re.compile(
-            r'<tr>\s*<td>.*?</td>\s*<td><a href="([^"]+)">\s*(.*?)\s*</a>\s*</td>\s*<td>\s*(.*?)\s*</td>\s*<td>\s*(.*?)\s*</td>',
-            re.DOTALL | re.IGNORECASE
-        )
+        seen_ids = set()
         
-        for match in row_pattern.findall(response.text):
-            url_path = match[0]
-            # URL format: https://.../profiles/individuals/123/edit
-            parts = url_path.split('/')
-            profiles.append({
-                "id": parts[-2],
-                "type": parts[-3],  # 'individuals' or 'companies'
-                "name": match[1].strip(),
-                "registration_number": match[2].strip(),
-                "category": match[3].strip(),
-                "url": url_path
-            })
+        base_url = f"{SEDA_BASE_URL}/profiles"
+        params = {
+            'search': search or "",
+            'registration_number': registration_number or "",
+            'type': profile_type or ""
+        }
+
+        for page in range(1, max_pages + 1):
+            current_params = params.copy()
+            if page > 1:
+                current_params['page'] = page
             
-        logger.info(f"Extracted {len(profiles)} profiles.")
+            logger.info(f"Fetching client profiles page {page} with params {current_params}...")
+            response = self.session.get(base_url, params=current_params)
+            self._validate_response(response)
+
+            # Pattern to extract ID, Type, Name, and Reg No from table rows
+            row_pattern = re.compile(
+                r'<tr>\s*<td>.*?</td>\s*<td><a href="([^"]+)">\s*(.*?)\s*</a>\s*</td>\s*<td>\s*(.*?)\s*</td>\s*<td>\s*(.*?)\s*</td>',
+                re.DOTALL | re.IGNORECASE
+            )
+            
+            page_matches = 0
+            for match in row_pattern.findall(response.text):
+                url_path = match[0]
+                parts = url_path.split('/')
+                profile_id = parts[-2]
+                
+                if profile_id not in seen_ids:
+                    profiles.append({
+                        "id": profile_id,
+                        "type": parts[-3],  # 'individuals' or 'companies'
+                        "name": match[1].strip(),
+                        "registration_number": match[2].strip(),
+                        "category": match[3].strip(),
+                        "url": url_path
+                    })
+                    seen_ids.add(profile_id)
+                    page_matches += 1
+            
+            if page_matches == 0:
+                break
+                
+            # If we got fewer than 10 rows, it's likely the last page (SEDA uses 10 per page)
+            if page_matches < 10:
+                break
+                
+        logger.info(f"Extracted {len(profiles)} profiles across {page} pages.")
         return profiles
 
     def fetch_individual_details(self, profile_id: str) -> Dict:
