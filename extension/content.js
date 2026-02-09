@@ -28,9 +28,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 function fillSedaForm(data, systemDetails, adminDefaults) {
     let fieldsFilled = 0;
 
-    // 1. Fill Standard Fields (Applicant, Finance, Engineer)
+    // 1. Fill Licensee first (Pre-requisite for many portal triggers)
+    const licensee = document.getElementById('distribution_licence_id');
+    if (licensee && data.distribution_licence_id) {
+        setValue(licensee, data.distribution_licence_id);
+    }
+
+    // 2. Fill Standard Fields (Applicant, Finance, Engineer)
     for (const [key, value] of Object.entries(data)) {
         if (!value || typeof value === 'object') continue;
+        if (key === 'account_number' || key === 'distribution_licence_id') continue;
+
         const element = document.getElementById(key) || document.querySelector(`[name="${key}"]`);
         if (element) {
             setValue(element, value);
@@ -142,10 +150,14 @@ function fillSedaForm(data, systemDetails, adminDefaults) {
         fieldsFilled++;
     }
 
-    // 7. Electricity Account Number
+    // 7. Electricity Account Number (Trigger portal AJAX)
     const tnbInp = document.getElementById('account_number');
     if (tnbInp && data.account_number) {
+        console.log("SEDA Mapper: Setting TNB Account and triggering lookup...");
         tnbInp.removeAttribute('readonly');
+
+        // Sequence: Focus -> Set Value -> Dispatch Input -> Dispatch Change -> Blur
+        // This mimics a real user clicking, typing, and clicking away.
         setValue(tnbInp, data.account_number);
         fieldsFilled++;
     }
@@ -159,8 +171,10 @@ function setValue(element, value) {
         element.value = value;
         element.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
+        element.focus();
         element.value = value;
         element.dispatchEvent(new Event('input', { bubbles: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
         element.dispatchEvent(new Event('blur', { bubbles: true }));
     }
     applyHighlight(element, "green");
