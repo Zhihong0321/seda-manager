@@ -129,6 +129,19 @@ function fillSedaForm(data, systemDetails, adminDefaults) {
         }
     }
 
+    // 6. Technical Summary & Financing
+    const detInp = document.getElementById('plant_deterioration');
+    if (detInp) {
+        setValue(detInp, adminDefaults.deterioration || "0.40");
+        fieldsFilled++;
+    }
+
+    const finModel = document.getElementById('financing_information[financial_model]');
+    if (finModel) {
+        setValue(finModel, adminDefaults.fin_model || "1");
+        fieldsFilled++;
+    }
+
     return { filled: fieldsFilled };
 }
 

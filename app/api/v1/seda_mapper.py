@@ -193,6 +193,8 @@ async def get_application_by_mykad(mykad: str):
             "region_state_id": state_id, # This fills 'state' select
             "latitude": lat,
             "longitude": lng,
+            "plant_deterioration": "0.40",
+            "financing_information[financial_model]": "1",
             "financing_information[pv_modules_cost]": f"{pv_cost:.2f}",
             "financing_information[inverter_cost]": f"{inverter_cost:.2f}",
             "financing_information[balance_of_system]": f"{bos_cost:.2f}",
