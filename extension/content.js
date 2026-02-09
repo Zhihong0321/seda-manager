@@ -48,11 +48,17 @@ function fillSedaForm(data, systemDetails, adminDefaults) {
 
             if (row) {
                 const brand = adminDefaults.mod_brand || "21"; // Default Jinko
+                const brandOther = adminDefaults.mod_brand_custom || "";
                 const type = adminDefaults.mod_type || "123";  // Default Monocrystalline
                 const model = adminDefaults.mod_model || systemDetails.module_details?.model || "Jinko Tiger Neo";
                 const cap = adminDefaults.mod_cap || "620";
 
                 setValue(row.querySelector('select[name$="[equipment_id]"]'), brand);
+                if (brand === "51" && brandOther) {
+                    const otherInp = row.querySelector('input[name$="[brand_other]"]');
+                    if (otherInp) setValue(otherInp, brandOther);
+                }
+
                 setValue(row.querySelector('select[name$="[module_type_id]"]'), type);
                 setValue(row.querySelector('input[name$="[model]"]'), model);
                 setValue(row.querySelector('input[name$="[capacity]"]'), cap);
@@ -72,10 +78,16 @@ function fillSedaForm(data, systemDetails, adminDefaults) {
 
         if (invRow) {
             const iBrand = adminDefaults.inv_brand || "63"; // Default Huawei
+            const iBrandOther = adminDefaults.inv_brand_custom || "";
             const iModel = adminDefaults.inv_model || "SUN2000-5KTL";
             const iCap = adminDefaults.inv_cap || "5";
 
             setValue(invRow.querySelector('select[name$="[equipment_id]"]'), iBrand);
+            if (iBrand === "93" && iBrandOther) {
+                const otherInvInp = invRow.querySelector('input[name$="[brand_other]"]');
+                if (otherInvInp) setValue(otherInvInp, iBrandOther);
+            }
+
             setValue(invRow.querySelector('input[name$="[model]"]'), iModel);
             setValue(invRow.querySelector('input[name$="[capacity]"]'), iCap);
             setValue(invRow.querySelector('input[name$="[count]"]'), "1"); // Usually 1 inverter

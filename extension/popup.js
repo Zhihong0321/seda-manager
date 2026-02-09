@@ -33,22 +33,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (settings.seda_defaults) {
             const d = settings.seda_defaults;
             document.getElementById('def-mod-brand').value = d.mod_brand || "21";
+            document.getElementById('def-mod-brand-custom').value = d.mod_brand_custom || "";
             document.getElementById('def-mod-type').value = d.mod_type || "123";
             document.getElementById('def-mod-model').value = d.mod_model || "";
             document.getElementById('def-mod-cap').value = d.mod_cap || "620";
             document.getElementById('def-inv-brand').value = d.inv_brand || "63";
+            document.getElementById('def-inv-brand-custom').value = d.inv_brand_custom || "";
             document.getElementById('def-inv-model').value = d.inv_model || "";
             document.getElementById('def-inv-cap').value = d.inv_cap || "5";
+
+            toggleCustomFields();
         }
     }
+
+    function toggleCustomFields() {
+        const modBrand = document.getElementById('def-mod-brand').value;
+        const invBrand = document.getElementById('def-inv-brand').value;
+        document.getElementById('mod-custom-grp').style.display = (modBrand === "51") ? "flex" : "none";
+        document.getElementById('inv-custom-grp').style.display = (invBrand === "93") ? "flex" : "none";
+    }
+
+    document.getElementById('def-mod-brand').addEventListener('change', toggleCustomFields);
+    document.getElementById('def-inv-brand').addEventListener('change', toggleCustomFields);
 
     async function saveSettings() {
         const settings = {
             mod_brand: document.getElementById('def-mod-brand').value,
+            mod_brand_custom: document.getElementById('def-mod-brand-custom').value,
             mod_type: document.getElementById('def-mod-type').value,
             mod_model: document.getElementById('def-mod-model').value,
             mod_cap: document.getElementById('def-mod-cap').value,
             inv_brand: document.getElementById('def-inv-brand').value,
+            inv_brand_custom: document.getElementById('def-inv-brand-custom').value,
             inv_model: document.getElementById('def-inv-model').value,
             inv_cap: document.getElementById('def-inv-cap').value
         };
