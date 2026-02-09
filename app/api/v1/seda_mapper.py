@@ -177,6 +177,12 @@ async def get_application_by_mykad(mykad: str):
         addr2 = lines[1] if len(lines) > 1 else ""
         addr3 = lines[2] if len(lines) > 2 else ""
 
+        # Coordinate extraction (Optional) - look for "2.9, 101.5"
+        lat, lng = "", ""
+        coord_match = re.search(r'(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)', raw_address)
+        if coord_match:
+            lat, lng = coord_match.group(1), coord_match.group(2)
+
         mapped_data.update({
             "site_ownership": "Fully Owned", # Default common
             "address_line_1": addr1,
@@ -185,6 +191,8 @@ async def get_application_by_mykad(mykad: str):
             "postcode": postcode or "",
             "town": town or "",
             "region_state_id": state_id, # This fills 'state' select
+            "latitude": lat,
+            "longitude": lng,
             "financing_information[pv_modules_cost]": f"{pv_cost:.2f}",
             "financing_information[inverter_cost]": f"{inverter_cost:.2f}",
             "financing_information[balance_of_system]": f"{bos_cost:.2f}",

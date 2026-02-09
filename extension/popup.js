@@ -43,6 +43,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('def-inv-cap').value = d.inv_cap || "5";
             document.getElementById('def-cost-ins').value = d.cost_ins || "0";
             document.getElementById('def-cost-om').value = d.cost_om || "0";
+            document.getElementById('def-geo-lat').value = d.geo_lat || "";
+            document.getElementById('def-geo-lng').value = d.geo_lng || "";
 
             toggleCustomFields();
         }
@@ -70,7 +72,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             inv_model: document.getElementById('def-inv-model').value,
             inv_cap: document.getElementById('def-inv-cap').value,
             cost_ins: document.getElementById('def-cost-ins').value,
-            cost_om: document.getElementById('def-cost-om').value
+            cost_om: document.getElementById('def-cost-om').value,
+            geo_lat: document.getElementById('def-geo-lat').value,
+            geo_lng: document.getElementById('def-geo-lng').value
         };
         await chrome.storage.local.set({ seda_defaults: settings });
         showStatus("Admin Defaults Saved!", "success");

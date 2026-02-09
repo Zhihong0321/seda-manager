@@ -110,6 +110,25 @@ function fillSedaForm(data, systemDetails, adminDefaults) {
         fieldsFilled++;
     }
 
+    // 5. Fill Geo Location (Handle Readonly fields)
+    const latInp = document.getElementById('latitude');
+    const lngInp = document.getElementById('longitude');
+
+    if (latInp && lngInp) {
+        const finalLat = data.latitude || adminDefaults.geo_lat;
+        const finalLng = data.longitude || adminDefaults.geo_lng;
+
+        if (finalLat && finalLng) {
+            latInp.removeAttribute('readonly');
+            lngInp.removeAttribute('readonly');
+
+            setValue(latInp, finalLat);
+            setValue(lngInp, finalLng);
+
+            fieldsFilled += 2;
+        }
+    }
+
     return { filled: fieldsFilled };
 }
 
