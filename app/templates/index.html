@@ -1,438 +1,576 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>eATAP Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; font-family: 'Inter', sans-serif; }
-        .header { border-bottom: 1px solid #dee2e6; padding: 20px 0; background: white; margin-bottom: 0; }
-        .section { border-bottom: 1px solid #dee2e6; padding: 40px 0; background: white; }
-        .no-margin { margin: 0 !important; }
-        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .status-dot.healthy { background-color: #28a745; }
-        .status-dot.warning { background-color: #ffc107; }
-        .status-dot.error { background-color: #dc3545; }
-        .status-dot.unknown { background-color: #6c757d; }
-        .label { font-weight: 600; color: #6c757d; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        .storage-card { background: #f8f9fa; border-radius: 8px; padding: 15px; }
-        .storage-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #dee2e6; }
-        .storage-item:last-child { border-bottom: none; }
-        .badge-storage { font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; }
-        .badge-railway { background-color: #a855f7; color: white; }
-        .badge-local { background-color: #6c757d; color: white; }
-        .handshake-card { background: #f8f9fa; border-radius: 8px; padding: 20px; margin-top: 15px; }
-        .handshake-result { display: none; }
-        .handshake-result.show { display: block; }
-        .check-item { display: flex; align-items: center; padding: 10px; margin: 5px 0; border-radius: 6px; background: white; }
-        .check-icon { font-size: 1.2rem; margin-right: 10px; }
-        .spinner-border-sm { width: 1rem; height: 1rem; }
-        .btn-verify { background-color: #0d6efd; color: white; border: none; }
-        .btn-verify:hover { background-color: #0b5ed7; }
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .header {
+            border-bottom: 1px solid #dee2e6;
+            padding: 20px 0;
+            background: white;
+            margin-bottom: 0;
+        }
+
+        .section {
+            border-bottom: 1px solid #dee2e6;
+            padding: 40px 0;
+            background: white;
+        }
+
+        .no-margin {
+            margin: 0 !important;
+        }
+
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .status-dot.healthy {
+            background-color: #28a745;
+        }
+
+        .status-dot.warning {
+            background-color: #ffc107;
+        }
+
+        .status-dot.error {
+            background-color: #dc3545;
+        }
+
+        .status-dot.unknown {
+            background-color: #6c757d;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .storage-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .storage-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .storage-item:last-child {
+            border-bottom: none;
+        }
+
+        .badge-storage {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .badge-railway {
+            background-color: #a855f7;
+            color: white;
+        }
+
+        .badge-local {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .handshake-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .handshake-result {
+            display: none;
+        }
+
+        .handshake-result.show {
+            display: block;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .check-icon {
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .btn-verify {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+        }
+
+        .btn-verify:hover {
+            background-color: #0b5ed7;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h4 class="no-margin">eATAP Solar Manager</h4>
-            <div>
-                <span class="status-dot {% if storage.status == 'healthy' %}healthy{% elif storage.status == 'warning' %}warning{% elif storage.status == 'error' %}error{% else %}unknown{% endif %}"></span> 
-                <span class="label">System Status: {{ status }}</span>
+    <div class="header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="no-margin">eATAP Solar Manager</h4>
+                <div>
+                    <span
+                        class="status-dot {% if storage.status == 'healthy' %}healthy{% elif storage.status == 'warning' %}warning{% elif storage.status == 'error' %}error{% else %}unknown{% endif %}"></span>
+                    <span class="label">System Status: {{ status }}</span>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="section">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6" style="border-right: 1px solid #dee2e6;">
-                <p class="label">Session Management</p>
-                <h5>Cookie Configuration</h5>
-                <p class="text-muted small">Upload your cookies.json exported from the SEDA portal to refresh the session.</p>
-                <form action="/upload-cookies" method="post" enctype="multipart/form-data">
-                    <input type="file" name="file" class="form-control mb-3">
-                    <button class="btn btn-dark btn-sm rounded-0">Update Session</button>
-                </form>
-            </div>
-            <div class="col-md-6">
-                <p class="label">Storage Health</p>
-                <div class="storage-card">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <strong>
-                            <span class="status-dot {% if storage.status == 'healthy' %}healthy{% elif storage.status == 'warning' %}warning{% elif storage.status == 'error' %}error{% else %}unknown{% endif %}"></span>
-                            {{ storage.status.upper() }}
-                        </strong>
-                        <span class="badge-storage {% if storage.is_railway_volume %}badge-railway{% else %}badge-local{% endif %}">
-                            {{ "Railway Volume" if storage.is_railway_volume else "Local Storage" }}
-                        </span>
-                    </div>
-                    <p class="text-muted small mb-2">{{ storage.message }}</p>
-                    <div class="storage-item">
-                        <span class="text-muted small">Path:</span>
-                        <code class="small">{{ storage.path }}</code>
-                    </div>
-                    <div class="storage-item">
-                        <span class="text-muted small">Writable:</span>
-                        <span class="small {% if storage.writable %}text-success{% else %}text-danger{% endif %}">
-                            {{ "✓ Yes" if storage.writable else "✗ No" }}
-                        </span>
-                    </div>
-                    <div class="storage-item">
-                        <span class="text-muted small">Cookies File:</span>
-                        <span class="small {% if storage.cookies_exist %}text-success{% else %}text-warning{% endif %}">
-                            {{ "✓ Found" if storage.cookies_exist else "✗ Not Found" }}
-                            {% if storage.cookies_exist %}({{ (storage.cookies_size / 1024) | round(1) }} KB){% endif %}
-                        </span>
-                    </div>
+    <div class="section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6" style="border-right: 1px solid #dee2e6;">
+                    <p class="label">Session Management</p>
+                    <h5>Cookie Configuration</h5>
+                    <p class="text-muted small">Upload your <code>cookies.json</code> or paste the JSON directly from
+                        the SEDA portal to refresh the session.</p>
+                    <form action="/upload-cookies" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="label mb-1">Upload File</label>
+                            <input type="file" name="file" class="form-control form-control-sm">
+                        </div>
+                        <div class="mb-3">
+                            <label class="label mb-1">Or Paste JSON</label>
+                            <textarea name="pasted_cookies" class="form-control form-control-sm" rows="5"
+                                placeholder='[{"name": "_ga", ...}]'></textarea>
+                        </div>
+                        <button class="btn btn-dark btn-sm rounded-0 w-100">Update Session</button>
+                    </form>
                 </div>
-                
-                <!-- API Handshake Section -->
-                <p class="label mt-4">API Handshake</p>
-                <div class="handshake-card">
-                    <p class="text-muted small mb-3">Verify cookie validity and test SEDA connection.</p>
-                    <button id="verifyBtn" class="btn btn-verify btn-sm w-100" onclick="runHandshake()">
-                        <span id="btnText">🔍 Verify Connection</span>
-                        <span id="btnSpinner" class="spinner-border spinner-border-sm" style="display: none;"></span>
-                    </button>
-                    
-                    <div id="handshakeResult" class="handshake-result mt-3">
+                <div class="col-md-6">
+                    <p class="label">Storage Health</p>
+                    <div class="storage-card">
                         <div class="d-flex align-items-center justify-content-between mb-2">
-                            <strong id="overallStatus">Checking...</strong>
-                            <span id="overallBadge" class="badge"></span>
+                            <strong>
+                                <span
+                                    class="status-dot {% if storage.status == 'healthy' %}healthy{% elif storage.status == 'warning' %}warning{% elif storage.status == 'error' %}error{% else %}unknown{% endif %}"></span>
+                                {{ storage.status.upper() }}
+                            </strong>
+                            <span
+                                class="badge-storage {% if storage.is_railway_volume %}badge-railway{% else %}badge-local{% endif %}">
+                                {{ "Railway Volume" if storage.is_railway_volume else "Local Storage" }}
+                            </span>
                         </div>
-                        <p id="overallMessage" class="text-muted small mb-3"></p>
-                        
-                        <div id="checksContainer">
-                            <!-- Storage Check -->
-                            <div class="check-item">
-                                <span id="storageIcon" class="check-icon">⏳</span>
-                                <div class="flex-grow-1">
-                                    <strong class="small">Storage</strong>
-                                    <p id="storageMsg" class="text-muted small mb-0">Pending...</p>
-                                </div>
-                            </div>
-                            <!-- Database Check -->
-                            <div class="check-item">
-                                <span id="dbIcon" class="check-icon">⏳</span>
-                                <div class="flex-grow-1">
-                                    <strong class="small">Database</strong>
-                                    <p id="dbMsg" class="text-muted small mb-0">Pending...</p>
-                                </div>
-                            </div>
-                            <!-- SEDA Cookies Check -->
-                            <div class="check-item">
-                                <span id="sedaIcon" class="check-icon">⏳</span>
-                                <div class="flex-grow-1">
-                                    <strong class="small">SEDA Session</strong>
-                                    <p id="sedaMsg" class="text-muted small mb-0">Pending...</p>
-                                </div>
-                            </div>
+                        <p class="text-muted small mb-2">{{ storage.message }}</p>
+                        <div class="storage-item">
+                            <span class="text-muted small">Path:</span>
+                            <code class="small">{{ storage.path }}</code>
                         </div>
-                        
-                        <div class="mt-3 pt-3 border-top">
-                            <a href="/api/handshake/" target="_blank" class="text-decoration-none small">View JSON Response →</a>
+                        <div class="storage-item">
+                            <span class="text-muted small">Writable:</span>
+                            <span class="small {% if storage.writable %}text-success{% else %}text-danger{% endif %}">
+                                {{ "✓ Yes" if storage.writable else "✗ No" }}
+                            </span>
+                        </div>
+                        <div class="storage-item">
+                            <span class="text-muted small">Cookies File:</span>
+                            <span
+                                class="small {% if storage.cookies_exist %}text-success{% else %}text-warning{% endif %}">
+                                {{ "✓ Found" if storage.cookies_exist else "✗ Not Found" }}
+                                {% if storage.cookies_exist %}({{ (storage.cookies_size / 1024) | round(1) }} KB){%
+                                endif %}
+                            </span>
                         </div>
                     </div>
+
+                    <!-- API Handshake Section -->
+                    <p class="label mt-4">API Handshake</p>
+                    <div class="handshake-card">
+                        <p class="text-muted small mb-3">Verify cookie validity and test SEDA connection.</p>
+                        <button id="verifyBtn" class="btn btn-verify btn-sm w-100" onclick="runHandshake()">
+                            <span id="btnText">🔍 Verify Connection</span>
+                            <span id="btnSpinner" class="spinner-border spinner-border-sm"
+                                style="display: none;"></span>
+                        </button>
+
+                        <div id="handshakeResult" class="handshake-result mt-3">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <strong id="overallStatus">Checking...</strong>
+                                <span id="overallBadge" class="badge"></span>
+                            </div>
+                            <p id="overallMessage" class="text-muted small mb-3"></p>
+
+                            <div id="checksContainer">
+                                <!-- Storage Check -->
+                                <div class="check-item">
+                                    <span id="storageIcon" class="check-icon">⏳</span>
+                                    <div class="flex-grow-1">
+                                        <strong class="small">Storage</strong>
+                                        <p id="storageMsg" class="text-muted small mb-0">Pending...</p>
+                                    </div>
+                                </div>
+                                <!-- Database Check -->
+                                <div class="check-item">
+                                    <span id="dbIcon" class="check-icon">⏳</span>
+                                    <div class="flex-grow-1">
+                                        <strong class="small">Database</strong>
+                                        <p id="dbMsg" class="text-muted small mb-0">Pending...</p>
+                                    </div>
+                                </div>
+                                <!-- SEDA Cookies Check -->
+                                <div class="check-item">
+                                    <span id="sedaIcon" class="check-icon">⏳</span>
+                                    <div class="flex-grow-1">
+                                        <strong class="small">SEDA Session</strong>
+                                        <p id="sedaMsg" class="text-muted small mb-0">Pending...</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 pt-3 border-top">
+                                <a href="/api/handshake/" target="_blank" class="text-decoration-none small">View JSON
+                                    Response →</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="label mt-4">Quick Links</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="/docs" class="text-decoration-none text-dark">📖 API Documentation
+                                (Swagger)</a></li>
+                        <li class="mb-2"><a href="/api/v1/health" class="text-decoration-none text-dark">⚡ System Health
+                                Check</a></li>
+                        <li class="mb-2"><a href="/api/v1/profiles/" class="text-decoration-none text-dark">👤 List
+                                Profiles</a></li>
+                        <li class="mb-2"><a href="/api/v1/applications/" class="text-decoration-none text-dark">📄 List
+                                Applications</a></li>
+                    </ul>
                 </div>
-                
-                <p class="label mt-4">Quick Links</p>
-                <ul class="list-unstyled">
-                    <li class="mb-2"><a href="/docs" class="text-decoration-none text-dark">📖 API Documentation (Swagger)</a></li>
-                    <li class="mb-2"><a href="/api/v1/health" class="text-decoration-none text-dark">⚡ System Health Check</a></li>
-                    <li class="mb-2"><a href="/api/v1/profiles/" class="text-decoration-none text-dark">👤 List Profiles</a></li>
-                    <li class="mb-2"><a href="/api/v1/applications/" class="text-decoration-none text-dark">📄 List Applications</a></li>
-                </ul>
             </div>
         </div>
     </div>
-</div>
 
-<div class="section">
-    <div class="container">
-        <p class="label">Test API Endpoints</p>
-        
-        <!-- Test List Profiles Section -->
-        <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
-                <button id="testProfilesBtn" class="btn btn-primary btn-sm" onclick="testListProfiles()">
-                    <span id="testProfilesText">📋 List All Profiles</span>
-                    <span id="testProfilesSpinner" class="spinner-border spinner-border-sm" style="display: none;"></span>
-                </button>
-                <button id="searchProfilesBtn" class="btn btn-outline-primary btn-sm" onclick="searchProfiles()">
-                    <span id="searchProfilesText">🔍 Search</span>
-                    <span id="searchProfilesSpinner" class="spinner-border spinner-border-sm" style="display: none;"></span>
-                </button>
-                <input type="text" id="profileSearchInput" class="form-control form-control-sm" placeholder="Search name..." style="max-width: 150px;">
-                <div class="d-flex align-items-center gap-2">
-                    <label class="small text-muted mb-0">Page:</label>
-                    <select id="profilePage" class="form-select form-select-sm" style="width: 70px;" onchange="profileSearchMode ? searchProfiles() : testListProfiles()">
-                        <option value="0">1</option>
-                    </select>
-                    <label class="small text-muted mb-0">Limit:</label>
-                    <select id="profileLimit" class="form-select form-select-sm" style="width: 80px;" onchange="profileSearchMode ? searchProfiles() : testListProfiles()">
-                        <option value="10">10</option>
-                        <option value="25" selected>25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
-                </div>
-                <a href="/api/v1/profiles/" target="_blank" class="text-decoration-none small">View API →</a>
-            </div>
-            
-            <div id="profilesResult" style="display: none;">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span id="profilesCount" class="badge bg-info"></span>
-                    <span id="profilesStatus" class="small"></span>
-                </div>
-                
-                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                    <table class="table table-sm table-striped table-hover">
-                        <thead class="table-dark sticky-top">
-                            <tr>
-                                <th>#</th>
-                                <th>Type</th>
-                                <th>Name</th>
-                                <th>Reg. Number</th>
-                                <th>Category</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="profilesTableBody">
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Pagination Controls -->
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <button id="prevProfilePage" class="btn btn-sm btn-outline-secondary" onclick="changeProfilePage(-1)" disabled>
-                        ← Previous
+    <div class="section">
+        <div class="container">
+            <p class="label">Test API Endpoints</p>
+
+            <!-- Test List Profiles Section -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+                    <button id="testProfilesBtn" class="btn btn-primary btn-sm" onclick="testListProfiles()">
+                        <span id="testProfilesText">📋 List All Profiles</span>
+                        <span id="testProfilesSpinner" class="spinner-border spinner-border-sm"
+                            style="display: none;"></span>
                     </button>
-                    <span id="profilePageInfo" class="small text-muted">Page 1 of 1</span>
-                    <button id="nextProfilePage" class="btn btn-sm btn-outline-secondary" onclick="changeProfilePage(1)" disabled>
-                        Next →
+                    <button id="searchProfilesBtn" class="btn btn-outline-primary btn-sm" onclick="searchProfiles()">
+                        <span id="searchProfilesText">🔍 Search</span>
+                        <span id="searchProfilesSpinner" class="spinner-border spinner-border-sm"
+                            style="display: none;"></span>
                     </button>
+                    <input type="text" id="profileSearchInput" class="form-control form-control-sm"
+                        placeholder="Search name..." style="max-width: 150px;">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="small text-muted mb-0">Page:</label>
+                        <select id="profilePage" class="form-select form-select-sm" style="width: 70px;"
+                            onchange="profileSearchMode ? searchProfiles() : testListProfiles()">
+                            <option value="0">1</option>
+                        </select>
+                        <label class="small text-muted mb-0">Limit:</label>
+                        <select id="profileLimit" class="form-select form-select-sm" style="width: 80px;"
+                            onchange="profileSearchMode ? searchProfiles() : testListProfiles()">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <a href="/api/v1/profiles/" target="_blank" class="text-decoration-none small">View API →</a>
+                </div>
+
+                <div id="profilesResult" style="display: none;">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span id="profilesCount" class="badge bg-info"></span>
+                        <span id="profilesStatus" class="small"></span>
+                    </div>
+
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-striped table-hover">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Type</th>
+                                    <th>Name</th>
+                                    <th>Reg. Number</th>
+                                    <th>Category</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profilesTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Controls -->
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <button id="prevProfilePage" class="btn btn-sm btn-outline-secondary"
+                            onclick="changeProfilePage(-1)" disabled>
+                            ← Previous
+                        </button>
+                        <span id="profilePageInfo" class="small text-muted">Page 1 of 1</span>
+                        <button id="nextProfilePage" class="btn btn-sm btn-outline-secondary"
+                            onclick="changeProfilePage(1)" disabled>
+                            Next →
+                        </button>
+                    </div>
+                </div>
+
+                <div id="profilesError" class="alert alert-danger" style="display: none;">
+                    <strong>Error:</strong> <span id="profilesErrorMsg"></span>
                 </div>
             </div>
-            
-            <div id="profilesError" class="alert alert-danger" style="display: none;">
-                <strong>Error:</strong> <span id="profilesErrorMsg"></span>
-            </div>
-        </div>
-        
-        <!-- Test Applications Section -->
-        <div class="mb-4">
-            <hr class="my-3">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <button id="testAppsBtn" class="btn btn-success btn-sm" onclick="testSearchApplications()">
-                    <span id="testAppsText">📄 Search Applications</span>
-                    <span id="testAppsSpinner" class="spinner-border spinner-border-sm" style="display: none;"></span>
-                </button>
-                <input type="text" id="appKeyword" class="form-control form-control-sm" placeholder="Keyword (optional)" style="max-width: 200px;">
-                <a href="/api/v1/applications/" target="_blank" class="text-decoration-none small">View Raw JSON →</a>
-            </div>
-            
-            <div id="appsResult" style="display: none;">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span id="appsCount" class="badge bg-success"></span>
-                    <span id="appsStatus" class="small"></span>
+
+            <!-- Test Applications Section -->
+            <div class="mb-4">
+                <hr class="my-3">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <button id="testAppsBtn" class="btn btn-success btn-sm" onclick="testSearchApplications()">
+                        <span id="testAppsText">📄 Search Applications</span>
+                        <span id="testAppsSpinner" class="spinner-border spinner-border-sm"
+                            style="display: none;"></span>
+                    </button>
+                    <input type="text" id="appKeyword" class="form-control form-control-sm"
+                        placeholder="Keyword (optional)" style="max-width: 200px;">
+                    <a href="/api/v1/applications/" target="_blank" class="text-decoration-none small">View Raw JSON
+                        →</a>
                 </div>
-                
-                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                    <table class="table table-sm table-striped table-hover">
-                        <thead class="table-dark sticky-top">
-                            <tr>
-                                <th>#</th>
-                                <th>Application ID</th>
-                                <th>Applicant</th>
-                                <th>App Number</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="appsTableBody">
-                        </tbody>
-                    </table>
+
+                <div id="appsResult" style="display: none;">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span id="appsCount" class="badge bg-success"></span>
+                        <span id="appsStatus" class="small"></span>
+                    </div>
+
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-striped table-hover">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Application ID</th>
+                                    <th>Applicant</th>
+                                    <th>App Number</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="appsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="appsError" class="alert alert-danger" style="display: none;">
+                    <strong>Error:</strong> <span id="appsErrorMsg"></span>
                 </div>
             </div>
-            
-            <div id="appsError" class="alert alert-danger" style="display: none;">
-                <strong>Error:</strong> <span id="appsErrorMsg"></span>
+
+            <!-- Application Detail Modal -->
+            <div id="appDetailSection" class="mt-4" style="display: none;">
+                <hr class="my-3">
+                <h6>Application Details</h6>
+                <div id="appDetailContent" class="bg-light p-3 rounded"></div>
             </div>
+
+            <hr class="my-4">
+            <p class="label">Recent Activity</p>
+            <p class="text-muted small">Waiting for logs...</p>
         </div>
-        
-        <!-- Application Detail Modal -->
-        <div id="appDetailSection" class="mt-4" style="display: none;">
-            <hr class="my-3">
-            <h6>Application Details</h6>
-            <div id="appDetailContent" class="bg-light p-3 rounded"></div>
-        </div>
-        
-        <hr class="my-4">
-        <p class="label">Recent Activity</p>
-        <p class="text-muted small">Waiting for logs...</p>
     </div>
-</div>
 
-<script>
-function runHandshake() {
-    const btn = document.getElementById('verifyBtn');
-    const btnText = document.getElementById('btnText');
-    const btnSpinner = document.getElementById('btnSpinner');
-    const result = document.getElementById('handshakeResult');
-    
-    // Show loading state
-    btn.disabled = true;
-    btnText.textContent = 'Verifying...';
-    btnSpinner.style.display = 'inline-block';
-    result.classList.add('show');
-    
-    // Reset icons
-    document.getElementById('storageIcon').textContent = '⏳';
-    document.getElementById('dbIcon').textContent = '⏳';
-    document.getElementById('sedaIcon').textContent = '⏳';
-    document.getElementById('storageMsg').textContent = 'Checking...';
-    document.getElementById('dbMsg').textContent = 'Checking...';
-    document.getElementById('sedaMsg').textContent = 'Checking...';
-    
-    // Call API
-    fetch('/api/handshake/')
-        .then(response => response.json())
-        .then(data => {
-            // Update overall status
-            const overallBadge = document.getElementById('overallBadge');
-            const overallStatus = document.getElementById('overallStatus');
-            
-            overallStatus.textContent = data.overall_status.toUpperCase();
-            document.getElementById('overallMessage').textContent = data.message;
-            
-            // Set badge color
-            overallBadge.className = 'badge ' + 
-                (data.overall_status === 'healthy' ? 'bg-success' : 
-                 data.overall_status === 'warning' ? 'bg-warning text-dark' : 'bg-danger');
-            overallBadge.textContent = data.overall_status;
-            
-            // Update storage check
-            const storage = data.checks.storage;
-            document.getElementById('storageIcon').textContent = 
-                storage.status === 'healthy' ? '✅' : 
-                storage.status === 'warning' ? '⚠️' : '❌';
-            document.getElementById('storageMsg').textContent = 
-                `Path: ${storage.path} | Writable: ${storage.writable ? 'Yes' : 'No'} | Cookies: ${storage.cookies_exist ? 'Yes' : 'No'}`;
-            
-            // Update database check
-            const db = data.checks.database;
-            document.getElementById('dbIcon').textContent = 
-                db.status === 'healthy' ? '✅' : 
-                db.status === 'warning' ? '⚠️' : '❌';
-            document.getElementById('dbMsg').textContent = db.message;
-            
-            // Update SEDA check
-            const seda = data.checks.seda_cookies;
-            document.getElementById('sedaIcon').textContent = 
-                seda.status === 'healthy' ? '✅' : 
-                seda.status === 'warning' ? '⚠️' : '❌';
-            document.getElementById('sedaMsg').textContent = seda.message;
-        })
-        .catch(error => {
-            document.getElementById('overallStatus').textContent = 'ERROR';
-            document.getElementById('overallMessage').textContent = 'Failed to run handshake: ' + error.message;
-            document.getElementById('overallBadge').className = 'badge bg-danger';
-            document.getElementById('overallBadge').textContent = 'error';
-        })
-        .finally(() => {
-            // Reset button
-            btn.disabled = false;
-            btnText.textContent = '🔍 Verify Connection';
-            btnSpinner.style.display = 'none';
-        });
-}
+    <script>
+        function runHandshake() {
+            const btn = document.getElementById('verifyBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const result = document.getElementById('handshakeResult');
 
-// Auto-run handshake if ?handshake=1 is in URL
-if (window.location.search.includes('handshake=1')) {
-    document.addEventListener('DOMContentLoaded', runHandshake);
-}
+            // Show loading state
+            btn.disabled = true;
+            btnText.textContent = 'Verifying...';
+            btnSpinner.style.display = 'inline-block';
+            result.classList.add('show');
 
-// Profile Pagination State
-let profileState = {
-    skip: 0,
-    limit: 25,
-    total: 0,
-    currentPage: 1
-};
-let profileSearchMode = false;
-let profileSearchTerm = '';
+            // Reset icons
+            document.getElementById('storageIcon').textContent = '⏳';
+            document.getElementById('dbIcon').textContent = '⏳';
+            document.getElementById('sedaIcon').textContent = '⏳';
+            document.getElementById('storageMsg').textContent = 'Checking...';
+            document.getElementById('dbMsg').textContent = 'Checking...';
+            document.getElementById('sedaMsg').textContent = 'Checking...';
 
-// Test List Profiles Function
-function testListProfiles() {
-    const btn = document.getElementById('testProfilesBtn');
-    const btnText = document.getElementById('testProfilesText');
-    const btnSpinner = document.getElementById('testProfilesSpinner');
-    const resultDiv = document.getElementById('profilesResult');
-    const errorDiv = document.getElementById('profilesError');
-    const tableBody = document.getElementById('profilesTableBody');
-    
-    // Reset search mode
-    profileSearchMode = false;
-    profileSearchTerm = '';
-    document.getElementById('profileSearchInput').value = '';
-    
-    // Get pagination values
-    const pageSelect = document.getElementById('profilePage');
-    const limitSelect = document.getElementById('profileLimit');
-    profileState.limit = parseInt(limitSelect.value);
-    profileState.currentPage = parseInt(pageSelect.value) + 1;
-    profileState.skip = parseInt(pageSelect.value) * profileState.limit;
-    
-    // Reset UI
-    resultDiv.style.display = 'none';
-    errorDiv.style.display = 'none';
-    tableBody.innerHTML = '';
-    
-    // Show loading
-    btn.disabled = true;
-    btnText.textContent = 'Fetching...';
-    btnSpinner.style.display = 'inline-block';
-    
-    fetch(`/api/v1/profiles/?skip=${profileState.skip}&limit=${profileState.limit}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                profileState.total = data.total;
-                
-                // Show success
-                resultDiv.style.display = 'block';
-                document.getElementById('profilesCount').textContent = `${data.total} Total Profiles`;
-                document.getElementById('profilesStatus').innerHTML = '<span class="text-success">✓ Success</span>';
-                
-                // Update pagination controls
-                const totalPages = Math.ceil(data.total / profileState.limit);
-                document.getElementById('profilePageInfo').textContent = `Page ${profileState.currentPage} of ${totalPages}`;
-                
-                // Update prev/next buttons
-                document.getElementById('prevProfilePage').disabled = profileState.skip === 0;
-                document.getElementById('nextProfilePage').disabled = (profileState.skip + data.profiles.length) >= data.total;
-                
-                // Update page selector
-                const pageSelector = document.getElementById('profilePage');
-                const currentSelected = pageSelector.value;
-                pageSelector.innerHTML = '';
-                for (let i = 0; i < totalPages; i++) {
-                    const option = document.createElement('option');
-                    option.value = i;
-                    option.textContent = i + 1;
-                    pageSelector.appendChild(option);
-                }
-                pageSelector.value = Math.min(currentSelected, totalPages - 1);
-                
-                // Populate table
-                data.profiles.forEach((profile, index) => {
-                    const rowNumber = profileState.skip + index + 1;
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
+            // Call API
+            fetch('/api/handshake/')
+                .then(response => response.json())
+                .then(data => {
+                    // Update overall status
+                    const overallBadge = document.getElementById('overallBadge');
+                    const overallStatus = document.getElementById('overallStatus');
+
+                    overallStatus.textContent = data.overall_status.toUpperCase();
+                    document.getElementById('overallMessage').textContent = data.message;
+
+                    // Set badge color
+                    overallBadge.className = 'badge ' +
+                        (data.overall_status === 'healthy' ? 'bg-success' :
+                            data.overall_status === 'warning' ? 'bg-warning text-dark' : 'bg-danger');
+                    overallBadge.textContent = data.overall_status;
+
+                    // Update storage check
+                    const storage = data.checks.storage;
+                    document.getElementById('storageIcon').textContent =
+                        storage.status === 'healthy' ? '✅' :
+                            storage.status === 'warning' ? '⚠️' : '❌';
+                    document.getElementById('storageMsg').textContent =
+                        `Path: ${storage.path} | Writable: ${storage.writable ? 'Yes' : 'No'} | Cookies: ${storage.cookies_exist ? 'Yes' : 'No'}`;
+
+                    // Update database check
+                    const db = data.checks.database;
+                    document.getElementById('dbIcon').textContent =
+                        db.status === 'healthy' ? '✅' :
+                            db.status === 'warning' ? '⚠️' : '❌';
+                    document.getElementById('dbMsg').textContent = db.message;
+
+                    // Update SEDA check
+                    const seda = data.checks.seda_cookies;
+                    document.getElementById('sedaIcon').textContent =
+                        seda.status === 'healthy' ? '✅' :
+                            seda.status === 'warning' ? '⚠️' : '❌';
+                    document.getElementById('sedaMsg').textContent = seda.message;
+                })
+                .catch(error => {
+                    document.getElementById('overallStatus').textContent = 'ERROR';
+                    document.getElementById('overallMessage').textContent = 'Failed to run handshake: ' + error.message;
+                    document.getElementById('overallBadge').className = 'badge bg-danger';
+                    document.getElementById('overallBadge').textContent = 'error';
+                })
+                .finally(() => {
+                    // Reset button
+                    btn.disabled = false;
+                    btnText.textContent = '🔍 Verify Connection';
+                    btnSpinner.style.display = 'none';
+                });
+        }
+
+        // Auto-run handshake if ?handshake=1 is in URL
+        if (window.location.search.includes('handshake=1')) {
+            document.addEventListener('DOMContentLoaded', runHandshake);
+        }
+
+        // Profile Pagination State
+        let profileState = {
+            skip: 0,
+            limit: 25,
+            total: 0,
+            currentPage: 1
+        };
+        let profileSearchMode = false;
+        let profileSearchTerm = '';
+
+        // Test List Profiles Function
+        function testListProfiles() {
+            const btn = document.getElementById('testProfilesBtn');
+            const btnText = document.getElementById('testProfilesText');
+            const btnSpinner = document.getElementById('testProfilesSpinner');
+            const resultDiv = document.getElementById('profilesResult');
+            const errorDiv = document.getElementById('profilesError');
+            const tableBody = document.getElementById('profilesTableBody');
+
+            // Reset search mode
+            profileSearchMode = false;
+            profileSearchTerm = '';
+            document.getElementById('profileSearchInput').value = '';
+
+            // Get pagination values
+            const pageSelect = document.getElementById('profilePage');
+            const limitSelect = document.getElementById('profileLimit');
+            profileState.limit = parseInt(limitSelect.value);
+            profileState.currentPage = parseInt(pageSelect.value) + 1;
+            profileState.skip = parseInt(pageSelect.value) * profileState.limit;
+
+            // Reset UI
+            resultDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            tableBody.innerHTML = '';
+
+            // Show loading
+            btn.disabled = true;
+            btnText.textContent = 'Fetching...';
+            btnSpinner.style.display = 'inline-block';
+
+            fetch(`/api/v1/profiles/?skip=${profileState.skip}&limit=${profileState.limit}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        profileState.total = data.total;
+
+                        // Show success
+                        resultDiv.style.display = 'block';
+                        document.getElementById('profilesCount').textContent = `${data.total} Total Profiles`;
+                        document.getElementById('profilesStatus').innerHTML = '<span class="text-success">✓ Success</span>';
+
+                        // Update pagination controls
+                        const totalPages = Math.ceil(data.total / profileState.limit);
+                        document.getElementById('profilePageInfo').textContent = `Page ${profileState.currentPage} of ${totalPages}`;
+
+                        // Update prev/next buttons
+                        document.getElementById('prevProfilePage').disabled = profileState.skip === 0;
+                        document.getElementById('nextProfilePage').disabled = (profileState.skip + data.profiles.length) >= data.total;
+
+                        // Update page selector
+                        const pageSelector = document.getElementById('profilePage');
+                        const currentSelected = pageSelector.value;
+                        pageSelector.innerHTML = '';
+                        for (let i = 0; i < totalPages; i++) {
+                            const option = document.createElement('option');
+                            option.value = i;
+                            option.textContent = i + 1;
+                            pageSelector.appendChild(option);
+                        }
+                        pageSelector.value = Math.min(currentSelected, totalPages - 1);
+
+                        // Populate table
+                        data.profiles.forEach((profile, index) => {
+                            const rowNumber = profileState.skip + index + 1;
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
                         <td>${rowNumber}</td>
                         <td><span class="badge bg-secondary">${escapeHtml(profile.type)}</span></td>
                         <td><strong>${escapeHtml(profile.name)}</strong></td>
@@ -444,117 +582,117 @@ function testListProfiles() {
                             </a>
                         </td>
                     `;
-                    tableBody.appendChild(row);
+                            tableBody.appendChild(row);
+                        });
+                    } else {
+                        throw new Error(data.message || 'Unknown error');
+                    }
+                })
+                .catch(error => {
+                    errorDiv.style.display = 'block';
+                    document.getElementById('profilesErrorMsg').textContent = error.message;
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btnText.textContent = '📋 Test List Profiles';
+                    btnSpinner.style.display = 'none';
                 });
-            } else {
-                throw new Error(data.message || 'Unknown error');
-            }
-        })
-        .catch(error => {
-            errorDiv.style.display = 'block';
-            document.getElementById('profilesErrorMsg').textContent = error.message;
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btnText.textContent = '📋 Test List Profiles';
-            btnSpinner.style.display = 'none';
-        });
-}
-
-// Change Profile Page
-function changeProfilePage(direction) {
-    const pageSelect = document.getElementById('profilePage');
-    const currentPage = parseInt(pageSelect.value);
-    const newPage = currentPage + direction;
-    
-    if (newPage >= 0) {
-        pageSelect.value = newPage;
-        if (profileSearchMode) {
-            searchProfiles();
-        } else {
-            testListProfiles();
         }
-    }
-}
 
-// Search Profiles Function
-function searchProfiles() {
-    const btn = document.getElementById('searchProfilesBtn');
-    const btnText = document.getElementById('searchProfilesText');
-    const btnSpinner = document.getElementById('searchProfilesSpinner');
-    const resultDiv = document.getElementById('profilesResult');
-    const errorDiv = document.getElementById('profilesError');
-    const tableBody = document.getElementById('profilesTableBody');
-    const searchInput = document.getElementById('profileSearchInput');
-    
-    const searchTerm = searchInput.value.trim();
-    if (!searchTerm) {
-        // If empty, switch back to list mode
-        profileSearchMode = false;
-        testListProfiles();
-        return;
-    }
-    
-    profileSearchMode = true;
-    profileSearchTerm = searchTerm;
-    
-    // Get pagination values
-    const pageSelect = document.getElementById('profilePage');
-    const limitSelect = document.getElementById('profileLimit');
-    profileState.limit = parseInt(limitSelect.value);
-    profileState.currentPage = parseInt(pageSelect.value) + 1;
-    profileState.skip = parseInt(pageSelect.value) * profileState.limit;
-    
-    // Reset UI
-    resultDiv.style.display = 'none';
-    errorDiv.style.display = 'none';
-    tableBody.innerHTML = '';
-    
-    // Show loading
-    btn.disabled = true;
-    btnText.textContent = 'Searching...';
-    btnSpinner.style.display = 'inline-block';
-    
-    fetch(`/api/v1/profiles/search/?name=${encodeURIComponent(searchTerm)}&skip=${profileState.skip}&limit=${profileState.limit}`)
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.detail || 'Search failed'); });
+        // Change Profile Page
+        function changeProfilePage(direction) {
+            const pageSelect = document.getElementById('profilePage');
+            const currentPage = parseInt(pageSelect.value);
+            const newPage = currentPage + direction;
+
+            if (newPage >= 0) {
+                pageSelect.value = newPage;
+                if (profileSearchMode) {
+                    searchProfiles();
+                } else {
+                    testListProfiles();
+                }
             }
-            return response.json();
-        })
-        .then(data => {
-            profileState.total = data.total;
-            
-            // Show success
-            resultDiv.style.display = 'block';
-            document.getElementById('profilesCount').textContent = `${data.total} Matches for "${searchTerm}"`;
-            document.getElementById('profilesStatus').innerHTML = '<span class="text-success">✓ Success</span>';
-            
-            // Update pagination controls
-            const totalPages = Math.ceil(data.total / profileState.limit);
-            document.getElementById('profilePageInfo').textContent = `Page ${profileState.currentPage} of ${totalPages}`;
-            
-            // Update prev/next buttons
-            document.getElementById('prevProfilePage').disabled = profileState.skip === 0;
-            document.getElementById('nextProfilePage').disabled = (profileState.skip + data.profiles.length) >= data.total;
-            
-            // Update page selector
-            const pageSelector = document.getElementById('profilePage');
-            const currentSelected = pageSelector.value;
-            pageSelector.innerHTML = '';
-            for (let i = 0; i < totalPages; i++) {
-                const option = document.createElement('option');
-                option.value = i;
-                option.textContent = i + 1;
-                pageSelector.appendChild(option);
+        }
+
+        // Search Profiles Function
+        function searchProfiles() {
+            const btn = document.getElementById('searchProfilesBtn');
+            const btnText = document.getElementById('searchProfilesText');
+            const btnSpinner = document.getElementById('searchProfilesSpinner');
+            const resultDiv = document.getElementById('profilesResult');
+            const errorDiv = document.getElementById('profilesError');
+            const tableBody = document.getElementById('profilesTableBody');
+            const searchInput = document.getElementById('profileSearchInput');
+
+            const searchTerm = searchInput.value.trim();
+            if (!searchTerm) {
+                // If empty, switch back to list mode
+                profileSearchMode = false;
+                testListProfiles();
+                return;
             }
-            pageSelector.value = Math.min(currentSelected, totalPages - 1);
-            
-            // Populate table
-            data.profiles.forEach((profile, index) => {
-                const rowNumber = profileState.skip + index + 1;
-                const row = document.createElement('tr');
-                row.innerHTML = `
+
+            profileSearchMode = true;
+            profileSearchTerm = searchTerm;
+
+            // Get pagination values
+            const pageSelect = document.getElementById('profilePage');
+            const limitSelect = document.getElementById('profileLimit');
+            profileState.limit = parseInt(limitSelect.value);
+            profileState.currentPage = parseInt(pageSelect.value) + 1;
+            profileState.skip = parseInt(pageSelect.value) * profileState.limit;
+
+            // Reset UI
+            resultDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            tableBody.innerHTML = '';
+
+            // Show loading
+            btn.disabled = true;
+            btnText.textContent = 'Searching...';
+            btnSpinner.style.display = 'inline-block';
+
+            fetch(`/api/v1/profiles/search/?name=${encodeURIComponent(searchTerm)}&skip=${profileState.skip}&limit=${profileState.limit}`)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.detail || 'Search failed'); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    profileState.total = data.total;
+
+                    // Show success
+                    resultDiv.style.display = 'block';
+                    document.getElementById('profilesCount').textContent = `${data.total} Matches for "${searchTerm}"`;
+                    document.getElementById('profilesStatus').innerHTML = '<span class="text-success">✓ Success</span>';
+
+                    // Update pagination controls
+                    const totalPages = Math.ceil(data.total / profileState.limit);
+                    document.getElementById('profilePageInfo').textContent = `Page ${profileState.currentPage} of ${totalPages}`;
+
+                    // Update prev/next buttons
+                    document.getElementById('prevProfilePage').disabled = profileState.skip === 0;
+                    document.getElementById('nextProfilePage').disabled = (profileState.skip + data.profiles.length) >= data.total;
+
+                    // Update page selector
+                    const pageSelector = document.getElementById('profilePage');
+                    const currentSelected = pageSelector.value;
+                    pageSelector.innerHTML = '';
+                    for (let i = 0; i < totalPages; i++) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = i + 1;
+                        pageSelector.appendChild(option);
+                    }
+                    pageSelector.value = Math.min(currentSelected, totalPages - 1);
+
+                    // Populate table
+                    data.profiles.forEach((profile, index) => {
+                        const rowNumber = profileState.skip + index + 1;
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
                     <td>${rowNumber}</td>
                     <td><span class="badge bg-secondary">${escapeHtml(profile.type)}</span></td>
                     <td><strong>${escapeHtml(profile.name)}</strong></td>
@@ -564,51 +702,51 @@ function searchProfiles() {
                         <a href="${escapeHtml(profile.url)}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
                     </td>
                 `;
-                tableBody.appendChild(row);
-            });
-        })
-        .catch(error => {
-            errorDiv.style.display = 'block';
-            document.getElementById('profilesErrorMsg').textContent = error.message;
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btnText.textContent = '🔍 Search';
-            btnSpinner.style.display = 'none';
-        });
-}
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    errorDiv.style.display = 'block';
+                    document.getElementById('profilesErrorMsg').textContent = error.message;
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btnText.textContent = '🔍 Search';
+                    btnSpinner.style.display = 'none';
+                });
+        }
 
-// Test Search Applications Function
-function testSearchApplications() {
-    const btn = document.getElementById('testAppsBtn');
-    const btnText = document.getElementById('testAppsText');
-    const btnSpinner = document.getElementById('testAppsSpinner');
-    const resultDiv = document.getElementById('appsResult');
-    const errorDiv = document.getElementById('appsError');
-    const tableBody = document.getElementById('appsTableBody');
-    const keyword = document.getElementById('appKeyword').value.trim();
-    
-    resultDiv.style.display = 'none';
-    errorDiv.style.display = 'none';
-    tableBody.innerHTML = '';
-    
-    btn.disabled = true;
-    btnText.textContent = 'Searching...';
-    btnSpinner.style.display = 'inline-block';
-    
-    const url = keyword ? `/api/v1/applications/?keyword=${encodeURIComponent(keyword)}` : '/api/v1/applications/';
-    
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                resultDiv.style.display = 'block';
-                document.getElementById('appsCount').textContent = `${data.count} Applications`;
-                document.getElementById('appsStatus').innerHTML = '<span class="text-success">OK</span>';
-                
-                data.applications.forEach((app, index) => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
+        // Test Search Applications Function
+        function testSearchApplications() {
+            const btn = document.getElementById('testAppsBtn');
+            const btnText = document.getElementById('testAppsText');
+            const btnSpinner = document.getElementById('testAppsSpinner');
+            const resultDiv = document.getElementById('appsResult');
+            const errorDiv = document.getElementById('appsError');
+            const tableBody = document.getElementById('appsTableBody');
+            const keyword = document.getElementById('appKeyword').value.trim();
+
+            resultDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            tableBody.innerHTML = '';
+
+            btn.disabled = true;
+            btnText.textContent = 'Searching...';
+            btnSpinner.style.display = 'inline-block';
+
+            const url = keyword ? `/api/v1/applications/?keyword=${encodeURIComponent(keyword)}` : '/api/v1/applications/';
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        resultDiv.style.display = 'block';
+                        document.getElementById('appsCount').textContent = `${data.count} Applications`;
+                        document.getElementById('appsStatus').innerHTML = '<span class="text-success">OK</span>';
+
+                        data.applications.forEach((app, index) => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
                         <td>${index + 1}</td>
                         <td><code>${escapeHtml(app.id)}</code></td>
                         <td>${escapeHtml(app.applicant)}</td>
@@ -618,36 +756,36 @@ function testSearchApplications() {
                             <button onclick="loadApplicationDetail('${app.id}')" class="btn btn-sm btn-outline-success">Details</button>
                         </td>
                     `;
-                    tableBody.appendChild(row);
+                            tableBody.appendChild(row);
+                        });
+                    } else {
+                        throw new Error(data.message || 'Unknown error');
+                    }
+                })
+                .catch(error => {
+                    errorDiv.style.display = 'block';
+                    document.getElementById('appsErrorMsg').textContent = error.message;
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btnText.textContent = 'Search Applications';
+                    btnSpinner.style.display = 'none';
                 });
-            } else {
-                throw new Error(data.message || 'Unknown error');
-            }
-        })
-        .catch(error => {
-            errorDiv.style.display = 'block';
-            document.getElementById('appsErrorMsg').textContent = error.message;
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btnText.textContent = 'Search Applications';
-            btnSpinner.style.display = 'none';
-        });
-}
+        }
 
-// Load Application Detail
-function loadApplicationDetail(appId) {
-    const detailSection = document.getElementById('appDetailSection');
-    const detailContent = document.getElementById('appDetailContent');
-    
-    detailSection.style.display = 'block';
-    detailContent.innerHTML = '<div class="text-center"><span class="spinner-border spinner-border-sm"></span> Loading...</div>';
-    
-    fetch(`/api/v1/applications/${appId}/`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                let html = `
+        // Load Application Detail
+        function loadApplicationDetail(appId) {
+            const detailSection = document.getElementById('appDetailSection');
+            const detailContent = document.getElementById('appDetailContent');
+
+            detailSection.style.display = 'block';
+            detailContent.innerHTML = '<div class="text-center"><span class="spinner-border spinner-border-sm"></span> Loading...</div>';
+
+            fetch(`/api/v1/applications/${appId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let html = `
                     <div class="row">
                         <div class="col-md-6">
                             <h6>Application Info</h6>
@@ -663,9 +801,9 @@ function loadApplicationDetail(appId) {
                         </div>
                     </div>
                 `;
-                
-                if (data.equipment && data.equipment.length > 0) {
-                    html += `
+
+                        if (data.equipment && data.equipment.length > 0) {
+                            html += `
                         <hr>
                         <h6>Equipment</h6>
                         <div class="table-responsive">
@@ -685,28 +823,29 @@ function loadApplicationDetail(appId) {
                             </table>
                         </div>
                     `;
-                }
-                
-                html += `<div class="mt-3"><a href="/api/v1/applications/${data.application_id}/" target="_blank" class="btn btn-sm btn-outline-primary">View Full JSON</a></div>`;
-                
-                detailContent.innerHTML = html;
-            } else {
-                throw new Error(data.message || 'Failed to load details');
-            }
-        })
-        .catch(error => {
-            detailContent.innerHTML = `<div class="alert alert-danger">Error: ${escapeHtml(error.message)}</div>`;
-        });
-}
+                        }
 
-// Escape HTML to prevent XSS
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-</script>
+                        html += `<div class="mt-3"><a href="/api/v1/applications/${data.application_id}/" target="_blank" class="btn btn-sm btn-outline-primary">View Full JSON</a></div>`;
+
+                        detailContent.innerHTML = html;
+                    } else {
+                        throw new Error(data.message || 'Failed to load details');
+                    }
+                })
+                .catch(error => {
+                    detailContent.innerHTML = `<div class="alert alert-danger">Error: ${escapeHtml(error.message)}</div>`;
+                });
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
 
 </body>
+
 </html>

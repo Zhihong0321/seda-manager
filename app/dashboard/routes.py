@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, File, UploadFile
+from fastapi import APIRouter, Request, File, UploadFile, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from app.core.config import COOKIES_PATH, logger, get_storage_health, get_db_connection, STORAGE_DIR, SEDA_BASE_URL
@@ -25,13 +25,19 @@ async def home(request: Request, handshake: str = None):
 
 
 @router.post("/upload-cookies")
-async def upload_cookies(file: UploadFile = File(...)):
-    logger.info(f"Uploading new session cookies to {COOKIES_PATH}")
-    
-    with open(COOKIES_PATH, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+async def upload_cookies(file: UploadFile = File(None), pasted_cookies: str = Form(None)):
+    if pasted_cookies:
+        logger.info(f"Saving pasted session cookies to {COOKIES_PATH}")
+        with open(COOKIES_PATH, "w", encoding="utf-8") as f:
+            f.write(pasted_cookies)
+    elif file and file.filename:
+        logger.info(f"Uploading new session cookies from file to {COOKIES_PATH}")
+        with open(COOKIES_PATH, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    else:
+        logger.warning("No cookie data provided in upload attempt")
         
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url="/?handshake=1", status_code=303)
 
 
 @router.get("/api/handshake/")
