@@ -52,10 +52,11 @@ To mimic a valid browser request, the following headers are required:
 - **Critical Pattern:** Must send `_token` twice in the POST body to mimic browser behavior.
 
 ### 2.4 Profile Update
-- **URL:** Same as GET (edit endpoint)
+- **URL:** `https://atap.seda.gov.my/profiles/individuals/{id}/edit` (Note: MUST include `/edit` even for POST/PUT)
 - **Method:** `POST` (with `_method: PUT` in form data)
-- **Required Fields:** `_token` (CSRF), `_method`, and all form fields above.
+- **Required Fields:** `_token` (CSRF), `_method`, and all form fields from detailed view.
 - **Critical Pattern:** Must send `_token` twice in the POST body to mimic browser behavior.
+- **Behavior:** SEDA generates a NEW profile ID on every update (Audit Trail). We must find and return the new ID.
 
 ---
 

@@ -302,10 +302,11 @@ class SEDAClient:
         Note: SEDA creates a NEW profile ID for every update. This method searches
         for and returns the newly generated ID.
         """
-        url = f"{SEDA_BASE_URL}/profiles/individuals/{profile_id}/edit"
+        edit_url = f"{SEDA_BASE_URL}/profiles/individuals/{profile_id}/edit"
+        update_url = f"{SEDA_BASE_URL}/profiles/individuals/{profile_id}/edit"
         
         try:
-            token = self._fetch_csrf_token(url)
+            token = self._fetch_csrf_token(edit_url)
             
             # Replicate browser behavior: Laravel PUT spoofing + double token
             payload = [
@@ -317,8 +318,8 @@ class SEDAClient:
             # Map and add fields to payload
             payload.extend(self._map_profile_data(data))
             
-            logger.info(f"Submitting update for individual {profile_id}...")
-            response = self.session.post(url, data=payload, headers={'Referer': url})
+            logger.info(f"Submitting update for individual {profile_id} to {update_url}...")
+            response = self.session.post(update_url, data=payload, headers={'Referer': edit_url})
             self._validate_response(response)
 
             # SEDA redirects to /profiles on success. 
