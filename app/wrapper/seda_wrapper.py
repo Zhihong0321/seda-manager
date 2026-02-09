@@ -243,7 +243,7 @@ class SEDAClient:
                 "error": "Profile not found in list. It might be a duplicate MyKad or the session timed out.",
                 "final_url": response.url
             }
-
+            
         except Exception as e:
             logger.error(f"Profile creation failed: {e}")
             return {
@@ -251,8 +251,12 @@ class SEDAClient:
                 "error": str(e)
             }
 
-    def update_individual_profile(self, profile_id: str, data: Dict) -> bool:
-        """Performs a PUT update for an individual profile."""
+    def update_individual_profile(self, profile_id: str, data: Dict) -> Optional[str]:
+        """
+        Performs a PUT update for an individual profile.
+        Note: SEDA creates a NEW profile ID for every update. This method searches
+        for and returns the newly generated ID.
+        """
         url = f"{SEDA_BASE_URL}/profiles/individuals/{profile_id}/edit"
         
         try:
@@ -265,19 +269,34 @@ class SEDAClient:
                 ('_token', token)
             ]
             
+            # Extract registration number for later verification
+            reg_no = data.get('mykad_passport') or data.get('registration_number')
+            
             for key, value in data.items():
                 if key not in ['_method', '_token']:
                     payload.append((key, value))
             
-            logger.info(f"Submitting update for individual {profile_id}")
+            logger.info(f"Submitting update for individual {profile_id}. Note: SEDA will assign a new ID.")
             response = self.session.post(url, data=payload, headers={'Referer': url})
             self._validate_response(response)
             
-            success = "Profile updated successfully" in response.text or response.status_code == 200
-            if success:
-                logger.info(f"Profile {profile_id} updated successfully.")
-            return success
+            # Success check: SEDA usually redirects to /profiles or displays a success message
+            if "Profile updated successfully" in response.text or response.status_code == 200:
+                logger.info(f"Update submitted for {profile_id}. Verifying new ID...")
+                
+                # Search by registration number to find the NEWLY created profile ID
+                if reg_no:
+                    # Search specifically for this registration number
+                    matches = self.fetch_profile_list(registration_number=reg_no, max_pages=1)
+                    if matches:
+                        new_id = matches[0]['id']
+                        logger.info(f"Profile {profile_id} updated. New ID is {new_id}")
+                        return new_id
+                
+                return profile_id # Fallback if we can't find the new one
+            
+            return None
 
         except Exception as e:
             logger.error(f"Update failed for profile {profile_id}: {e}")
-            return False
+            return None

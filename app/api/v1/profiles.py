@@ -82,6 +82,7 @@ async def search_profile(
         },
         "profiles": paginated_matches
     }
+
 @router.get("/{profile_id}")
 async def get_profile_details(profile_id: str, client: SEDAClient = Depends(get_client)):
     """Retrieve detailed form information for a specific individual profile."""
@@ -117,8 +118,17 @@ async def update_profile(
     payload: ProfileUpdate, 
     client: SEDAClient = Depends(get_client)
 ):
-    """Update the details of an individual profile."""
-    success = client.update_individual_profile(profile_id, payload.model_dump())
-    if not success:
+    """
+    Update the details of an individual profile.
+    Note: Due to SEDA behavior, this usually results in a new profile_id.
+    """
+    new_profile_id = client.update_individual_profile(profile_id, payload.model_dump())
+    if not new_profile_id:
         raise HTTPException(status_code=400, detail="Failed to update profile. Check session or payload.")
-    return {"message": "Update request submitted successfully"}
+    
+    return {
+        "success": True,
+        "old_profile_id": profile_id,
+        "new_profile_id": new_profile_id,
+        "message": "Update submitted successfully. Note that SEDA has generated a new profile ID."
+    }
