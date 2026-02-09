@@ -15,6 +15,7 @@
             --text: #F8FAFC;
             --text-dim: #94A3B8;
             --accent: #38BDF8;
+            --success: #22C55E;
         }
 
         body {
@@ -23,7 +24,7 @@
             color: var(--text);
             margin: 0;
             padding: 16px;
-            width: 320px;
+            width: 350px;
             overflow-x: hidden;
         }
 
@@ -36,9 +37,15 @@
         header {
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: space-between;
             border-bottom: 1px solid #ffffff1a;
             padding-bottom: 12px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .logo {
@@ -64,27 +71,75 @@
             -webkit-text-fill-color: transparent;
         }
 
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 8px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            background: transparent;
+            color: var(--text-dim);
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--card);
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
         .input-group {
             display: flex;
             flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-row {
+            display: flex;
             gap: 8px;
         }
 
+        .input-row .input-group {
+            flex: 1;
+        }
+
         label {
-            font-size: 12px;
-            font-weight: 500;
+            font-size: 11px;
+            font-weight: 600;
             color: var(--text-dim);
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
-        input {
+        input,
+        select {
             background: var(--card);
             border: 1px solid #ffffff1a;
             border-radius: 8px;
             padding: 10px 12px;
             color: white;
-            font-size: 14px;
+            font-size: 13px;
             transition: all 0.2s;
         }
 
@@ -94,7 +149,7 @@
             box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.2);
         }
 
-        button {
+        .btn-primary {
             background: linear-gradient(to right, var(--primary), #FF6B00);
             color: white;
             border: none;
@@ -103,81 +158,91 @@
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            transition: all 0.2s;
         }
 
-        button:hover {
+        .btn-secondary {
+            background: var(--card);
+            border: 1px solid #ffffff1a;
+            color: var(--text);
+            padding: 10px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        button:hover:not(:disabled) {
             opacity: 0.9;
             transform: translateY(-1px);
-        }
-
-        button:active {
-            transform: translateY(0);
         }
 
         button:disabled {
             background: #475569;
             cursor: not-allowed;
-            transform: none;
+            opacity: 0.5;
         }
 
         .status {
             padding: 12px;
-            background: rgba(56, 189, 248, 0.1);
-            border-left: 3px solid var(--accent);
-            border-radius: 4px;
-            font-size: 13px;
-            line-height: 1.5;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.4;
             display: none;
         }
 
         .status.error {
             background: rgba(239, 68, 68, 0.1);
-            border-left-color: #EF4444;
+            border: 1px solid #ef44444d;
             color: #FCA5A5;
         }
 
         .status.success {
             background: rgba(34, 197, 94, 0.1);
-            border-left-color: #22C55E;
+            border: 1px solid #22c55e4d;
             color: #86EFAC;
         }
 
         .data-preview {
             background: var(--card);
-            border-radius: 8px;
+            border-radius: 10px;
             padding: 12px;
-            font-size: 12px;
-            max-height: 150px;
-            overflow-y: auto;
             border: 1px solid #ffffff0d;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
             display: none;
         }
 
         .data-item {
             display: flex;
             justify-content: space-between;
-            padding: 4px 0;
+            padding: 6px 0;
             border-bottom: 1px solid #ffffff08;
-        }
-
-        .data-item:last-child {
-            border-bottom: none;
         }
 
         .data-label {
             color: var(--text-dim);
         }
 
+        .settings-header {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
         footer {
             margin-top: 8px;
-            font-size: 11px;
+            font-size: 10px;
             color: var(--text-dim);
             text-align: center;
+            opacity: 0.7;
         }
     </style>
 </head>
@@ -185,31 +250,102 @@
 <body>
     <div class="container">
         <header>
-            <div class="logo">S</div>
-            <h1>SEDA Mapper</h1>
+            <div class="header-left">
+                <div class="logo">S</div>
+                <h1>SEDA Mapper</h1>
+            </div>
         </header>
 
-        <div class="input-group">
-            <label for="app-id">Application / Profile ID</label>
-            <input type="text" id="app-id" placeholder="Enter ID (e.g. 4088)">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="mapper">MAPPER</button>
+            <button class="tab-btn" data-tab="settings">DEFAULTS</button>
         </div>
 
-        <button id="fetch-btn">
-            <span>Fetch from System</span>
-        </button>
+        <!-- TAB: MAPPER -->
+        <div id="mapper-tab" class="tab-content active">
+            <div class="input-group">
+                <label for="app-id">MyKad No / ID</label>
+                <input type="text" id="app-id" placeholder="Enter MyKad (Auto-detected)">
+            </div>
 
-        <div id="data-preview" class="data-preview">
-            <!-- Data items will be injected here -->
+            <button id="fetch-btn" class="btn-primary">
+                <span>Fetch from System</span>
+            </button>
+
+            <div id="data-preview" class="data-preview"></div>
+
+            <button id="fill-btn" class="btn-primary" disabled>
+                <span>Map & Fill SEDA Form</span>
+            </button>
         </div>
 
-        <button id="fill-btn" disabled>
-            <span>Map & Fill Form</span>
-        </button>
+        <!-- TAB: SETTINGS (ADMIN) -->
+        <div id="settings-tab" class="tab-content">
+            <div class="settings-header">
+                <span style="font-size:16px;">📦</span> SOLAR MODULES
+            </div>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Brand</label>
+                    <select id="def-mod-brand">
+                        <option value="21">JINKO SOLAR</option>
+                        <option value="45">TRINA SOLAR</option>
+                        <option value="7">CANADIAN SOLAR</option>
+                        <option value="17">HANWA QCELL</option>
+                        <option value="51">OTHERS</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Type</label>
+                    <select id="def-mod-type">
+                        <option value="123">MONOCRYSTALLINE</option>
+                        <option value="125">POLYCRYSTALLINE</option>
+                        <option value="127">THIN FILM</option>
+                    </select>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Default Model Name</label>
+                <input type="text" id="def-mod-model" placeholder="Ex: Jinko Tiger Neo">
+            </div>
+            <div class="input-group">
+                <label>Panel Capacity (wp)</label>
+                <input type="number" id="def-mod-cap" value="620">
+            </div>
+
+            <div class="settings-header" style="color:var(--primary);">
+                <span style="font-size:16px;">⚡</span> SMART INVERTER
+            </div>
+            <div class="input-group">
+                <label>Brand</label>
+                <select id="def-inv-brand">
+                    <option value="63">HUAWEI</option>
+                    <option value="65">SUNGROW</option>
+                    <option value="53">SMA</option>
+                    <option value="57">ABB</option>
+                    <option value="93">OTHERS</option>
+                </select>
+            </div>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Model</label>
+                    <input type="text" id="def-inv-model" placeholder="Ex: SUN2000-5KTL">
+                </div>
+                <div class="input-group">
+                    <label>kWac</label>
+                    <input type="number" id="def-inv-cap" value="5">
+                </div>
+            </div>
+
+            <button id="save-settings-btn" class="btn-primary" style="background:var(--success); margin-top:8px;">
+                <span>Save Admin Defaults</span>
+            </button>
+        </div>
 
         <div id="status" class="status"></div>
 
         <footer>
-            Connected to: https://seda-manager-production.up.railway.app
+            Engine: https://seda-manager-production.up.railway.app
         </footer>
     </div>
     <script src="popup.js"></script>

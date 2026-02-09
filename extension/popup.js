@@ -10,10 +10,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     const appIdInput = document.getElementById('app-id');
     const statusDiv = document.getElementById('status');
     const previewDiv = document.getElementById('data-preview');
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
 
     let allResultData = null;
 
-    // Helper to check if content script is ready
+    // --- Tab Switching ---
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+        });
+    });
+
+    // --- Settings Persistence ---
+    async function loadSettings() {
+        const settings = await chrome.storage.local.get(['seda_defaults']);
+        if (settings.seda_defaults) {
+            const d = settings.seda_defaults;
+            document.getElementById('def-mod-brand').value = d.mod_brand || "21";
+            document.getElementById('def-mod-type').value = d.mod_type || "123";
+            document.getElementById('def-mod-model').value = d.mod_model || "";
+            document.getElementById('def-mod-cap').value = d.mod_cap || "620";
+            document.getElementById('def-inv-brand').value = d.inv_brand || "63";
+            document.getElementById('def-inv-model').value = d.inv_model || "";
+            document.getElementById('def-inv-cap').value = d.inv_cap || "5";
+        }
+    }
+
+    async function saveSettings() {
+        const settings = {
+            mod_brand: document.getElementById('def-mod-brand').value,
+            mod_type: document.getElementById('def-mod-type').value,
+            mod_model: document.getElementById('def-mod-model').value,
+            mod_cap: document.getElementById('def-mod-cap').value,
+            inv_brand: document.getElementById('def-inv-brand').value,
+            inv_model: document.getElementById('def-inv-model').value,
+            inv_cap: document.getElementById('def-inv-cap').value
+        };
+        await chrome.storage.local.set({ seda_defaults: settings });
+        showStatus("Admin Defaults Saved!", "success");
+    }
+
+    saveSettingsBtn.addEventListener('click', saveSettings);
+    loadSettings();
+
+    // --- Helper to check if content script is ready ---
     async function ensureContentScriptReady(tabId) {
         try {
             const response = await chrome.tabs.sendMessage(tabId, { action: "ping" }).catch(() => null);
@@ -23,25 +69,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Auto-detect MyKad
+    // --- Auto-detect MyKad ---
     async function autoDetect() {
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             if (tab && tab.url && tab.url.includes("atap.seda.gov.my")) {
                 const isReady = await ensureContentScriptReady(tab.id);
-                if (!isReady) {
-                    console.warn("SEDA Mapper: Content script not ready on this page yet.");
-                    return;
-                }
+                if (!isReady) return;
 
                 chrome.tabs.sendMessage(tab.id, { action: "getMyKad" }, (response) => {
-                    if (chrome.runtime.lastError) {
-                        console.log("Auto-detect suppressed error:", chrome.runtime.lastError.message);
-                        return;
-                    }
+                    if (chrome.runtime.lastError) return;
                     if (response && response.mykad) {
                         appIdInput.value = response.mykad;
-                        showStatus("Auto-detected MyKad: " + response.mykad, "success");
+                        showStatus("Detected MyKad: " + response.mykad, "success");
                     }
                 });
             }
@@ -50,6 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     autoDetect();
 
+    // --- Fetch Logic ---
     fetchBtn.addEventListener('click', async () => {
         const mykad = appIdInput.value.trim();
         if (!mykad) {
@@ -57,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        showStatus("Connecting to Railway...", "");
+        showStatus("Syncing with Railway...", "");
         fetchBtn.disabled = true;
 
         try {
@@ -69,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ detail: "Network Error" }));
+                const errorData = await response.json().catch(() => ({ detail: "Not found" }));
                 throw new Error(errorData.detail || `Server Error (${response.status})`);
             }
 
@@ -86,25 +127,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // --- Fill Logic ---
     fillBtn.addEventListener('click', async () => {
         if (!allResultData) return;
         fillBtn.disabled = true;
-        showStatus("Mapping data & Adding Modules...", "");
+        showStatus("Executing Automated Mapping...", "");
 
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
         const isReady = await ensureContentScriptReady(tab.id);
         if (!isReady) {
-            showStatus("Cant connect to SEDA page. Please REFRESH the SEDA page.", "error");
+            showStatus("Please REFRESH the SEDA page first.", "error");
             fillBtn.disabled = false;
             return;
         }
+
+        // Load custom defaults to merge/override
+        const settingsRes = await chrome.storage.local.get(['seda_defaults']);
+        const defaults = settingsRes.seda_defaults || {};
 
         const messageBody = {
             action: "fillForm",
             data: {
                 mapped_to_seda: allResultData.mapped_to_seda,
-                module_details: allResultData.system_details.module_details
+                // Pass both the invoice-detected details and the user-configured defaults
+                system_details: allResultData.system_details,
+                admin_defaults: defaults
             }
         };
 
@@ -133,10 +181,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="font-weight:700; font-size:12px; color:var(--primary); margin-bottom:6px;">SYSTEM DETAILS</div>
                     <div class="data-item"><span class="data-label">Invoice:</span> <span>${details.invoice_no || 'N/A'}</span></div>
                     <div class="data-item"><span class="data-label">Package:</span> <span>${details.package_name || 'N/A'}</span></div>
-                    <div class="data-item" style="color:var(--accent); font-weight:bold;"><span class="data-label">Solar Module:</span> <span>JINKO 620W</span></div>
                     <div class="data-item"><span class="data-label">Panel Qty:</span> <span style="font-weight:bold; color:var(--accent)">${details.panel_qty || '0'}</span></div>
                     <div class="data-item"><span class="data-label">System Size:</span> <span style="font-weight:bold; color:var(--primary)">${details.calculated_kwp || '0'} kWp</span></div>
-                    <div class="data-item" style="margin-top:4px; border-top:1px dotted #ccc; padding-top:4px;"><span class="data-label">TNB Account:</span> <span style="color:var(--primary)">${details.tnb_account || 'Missing'}</span></div>
                 </div>
             `;
             previewDiv.innerHTML += detailsHtml;
@@ -147,9 +193,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div style="background: rgba(34,197,94,0.1); border: 1px solid #22c55e; border-radius: 8px; padding: 10px; margin-bottom: 12px;">
                     <div style="font-weight:700; font-size:12px; color:#15803d; margin-bottom:6px;">FINANCIAL TRACING (RM ${details.invoice_amount})</div>
             `;
-            Object.entries(details.financial_breakdown).forEach(([label, val]) => {
-                finHtml += `<div class="data-item"><span class="data-label">${label}:</span> <span style="font-weight:bold;">${val.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>`;
-            });
+            const breakdown = details.financial_breakdown;
+            finHtml += `<div class="data-item"><span class="data-label">Consultancy:</span> <span style="font-weight:bold;">${breakdown.Consultancy.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>`;
             finHtml += `</div>`;
             previewDiv.innerHTML += finHtml;
         }
@@ -158,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         previewDiv.style.display = "block";
 
         Object.entries(data).forEach(([key, val]) => {
-            if (!val) return;
+            if (!val || typeof val === 'object') return;
             const item = document.createElement('div');
             item.className = "data-item";
             item.innerHTML = `
