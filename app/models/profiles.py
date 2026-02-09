@@ -15,27 +15,34 @@ class ProfileUpdate(BaseModel):
     Data required to create/update an individual profile.
     Fields and naming strictly match the SEDA eATAP portal POST structure.
     """
+    # Identification
     salutation: str # Expects "MR.", "MS.", etc.
-    name: str
-    citizenship: str # Expects "Malaysian" or other country labels
-    mykad_passport: str # Numbers only, no dashes
+    name: str # Full Name
+    citizenship: str # e.g., "Malaysian"
+    ic_number: str = Field(..., description="MyKad or Passport number (no dashes/spaces)")
     email: str
+
+    # Address Details
     address_line_1: str
     address_line_2: Optional[str] = ""
     address_line_3: Optional[str] = ""
     postcode: str
     town: str
     state: str
-    phone: Optional[str] = ""
+    
+    # Contact Numbers
+    phone: Optional[str] = "" # Home/Office phone
     mobile: str
-    contact_salutation: str
-    contact_name: str
-    contact_mykad_passport: str
-    contact_citizenship: str
-    contact_relationship: str
-    contact_email: str
-    contact_phone: Optional[str] = ""
-    contact_mobile: str
+
+    # Emergency Contact Info (Renamed from contact_...)
+    emergency_salutation: str
+    emergency_name: str
+    emergency_ic_number: str
+    emergency_citizenship: str
+    emergency_relationship: str
+    emergency_email: str
+    emergency_phone: Optional[str] = ""
+    emergency_mobile: str
 
 class ProfileCreateResponse(BaseModel):
     """Response returned after attempting to create a profile."""

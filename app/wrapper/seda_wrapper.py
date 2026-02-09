@@ -138,7 +138,7 @@ class SEDAClient:
 
         # 1. Extract standard text/hidden inputs
         inputs = re.findall(r'<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"', response.text)
-        details = {name: value for name, value in inputs if name != '_token'}
+        details = {name: value for name, value in inputs if name not in ['_token', '_method']}
         
         # 2. Extract selected values from dropdowns
         select_names = re.findall(r'<select[^>]*name="([^"]+)"', response.text)
@@ -148,8 +148,67 @@ class SEDAClient:
             if select_block:
                 selected_opt = re.search(r'<option[^>]*selected[^>]*>(.*?)</option>', select_block.group(0))
                 details[name] = selected_opt.group(1).strip() if selected_opt else ""
+        
+        # 3. Map to clean API keys
+        clean_mapping = {
+            'mykad_passport': 'ic_number',
+            'contact_salutation': 'emergency_salutation',
+            'contact_name': 'emergency_name',
+            'contact_mykad_passport': 'emergency_ic_number',
+            'contact_citizenship': 'emergency_citizenship',
+            'contact_relationship': 'emergency_relationship',
+            'contact_email': 'emergency_email',
+            'contact_phone': 'emergency_phone',
+            'contact_mobile': 'emergency_mobile'
+        }
+        
+        return {clean_mapping.get(k, k): v for k, v in details.items()}
+
+    def _map_profile_data(self, data: Dict) -> List[tuple]:
+        """Maps clean API field names to legacy SEDA portal field names."""
+        mapping = {
+            'salutation': 'salutation',
+            'name': 'name',
+            'citizenship': 'citizenship',
+            'mykad_passport': 'ic_number',
+            'email': 'email',
+            'address_line_1': 'address_line_1',
+            'address_line_2': 'address_line_2',
+            'address_line_3': 'address_line_3',
+            'postcode': 'postcode',
+            'town': 'town',
+            'state': 'state',
+            'phone': 'phone',
+            'mobile': 'mobile',
+            'contact_salutation': 'emergency_salutation',
+            'contact_name': 'emergency_name',
+            'contact_mykad_passport': 'emergency_ic_number',
+            'contact_citizenship': 'emergency_citizenship',
+            'contact_relationship': 'emergency_relationship',
+            'contact_email': 'emergency_email',
+            'contact_phone': 'emergency_phone',
+            'contact_mobile': 'emergency_mobile'
+        }
+        
+        payload = []
+        for seda_field, data_key in mapping.items():
+            value = data.get(data_key, "")
+            
+            # Legacy logic: Title/Salutation formatting
+            if seda_field == 'salutation' and value and not str(value).endswith('.'):
+                value = f"{value}."
+            
+            # Legacy logic: IC/Passport cleaning
+            if seda_field in ['mykad_passport', 'contact_mykad_passport'] and value:
+                value = re.sub(r'[^0-9A-Za-z]', '', str(value))
+            
+            # Legacy logic: Fallback for missing contact phone
+            if seda_field == 'contact_phone' and not value:
+                value = data.get('emergency_mobile', '')
                 
-        return details
+            payload.append((seda_field, str(value) if value is not None else ""))
+        
+        return payload
 
     def create_individual_profile(self, data: Dict) -> Dict:
         """Creates a new individual profile."""
@@ -164,33 +223,8 @@ class SEDAClient:
                 ('_token', token)
             ]
             
-            # 1. Define the full set of fields required by SEDA (from HAR)
-            seda_fields = [
-                'salutation', 'name', 'citizenship', 'mykad_passport', 'email',
-                'address_line_1', 'address_line_2', 'address_line_3', 'postcode',
-                'town', 'state', 'phone', 'mobile',
-                'contact_salutation', 'contact_name', 'contact_mykad_passport',
-                'contact_citizenship', 'contact_relationship', 'contact_email',
-                'contact_phone', 'contact_mobile'
-            ]
-            
-            # 2. Build the payload ensuring ALL fields are present
-            for field in seda_fields:
-                value = data.get(field, "")
-                
-                # HAR Source of Truth: salutation has '.', contact_salutation does NOT
-                if field == 'salutation' and value and not str(value).endswith('.'):
-                    value = f"{value}."
-                
-                if field in ['mykad_passport', 'contact_mykad_passport'] and value:
-                    # Remove dashes/spaces from MyKad/Passport
-                    value = re.sub(r'[^0-9A-Za-z]', '', str(value))
-                
-                # SEDA validation fix: contact_phone cannot be blank. Fallback to contact_mobile.
-                if field == 'contact_phone' and not value:
-                    value = data.get('contact_mobile', '')
-                
-                payload.append((field, str(value) if value is not None else ""))
+            # 1. Map API data to SEDA fields
+            payload.extend(self._map_profile_data(data))
             
             logger.debug(f"Final SEDA Payload: {payload}")
             logger.info(f"Submitting new individual profile for: {data.get('name')}")
@@ -270,12 +304,11 @@ class SEDAClient:
                 ('_token', token)
             ]
             
-            # Extract registration number for later verification
-            reg_no = data.get('mykad_passport') or data.get('registration_number')
+            # Extract registration number for later verification (handles new clean key)
+            reg_no = data.get('ic_number') or data.get('mykad_passport') or data.get('registration_number')
             
-            for key, value in data.items():
-                if key not in ['_method', '_token']:
-                    payload.append((key, value))
+            # Map and add fields to payload
+            payload.extend(self._map_profile_data(data))
             
             logger.info(f"Submitting update for individual {profile_id}. Note: SEDA will assign a new ID.")
             response = self.session.post(url, data=payload, headers={'Referer': url})
