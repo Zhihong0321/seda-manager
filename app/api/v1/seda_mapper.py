@@ -119,7 +119,41 @@ async def get_application_by_mykad(mykad: str):
                 "quantity": panel_qty
             }
         }
-        
+
+        # --- Financial Tracing ---
+        total_amount = float(invoice.get("total_amount") or 0) if invoice else 0
+        if total_amount > 0:
+            pv_cost = round(total_amount * 0.30, 2)
+            inverter_cost = 4500.00
+            bos_cost = round(total_amount * 0.15, 2)
+            intercon_cost = round(total_amount * 0.15, 2)
+            
+            # Consultancy is the remainder
+            sum_of_known = pv_cost + inverter_cost + bos_cost + intercon_cost
+            consultancy_cost = round(total_amount - sum_of_known, 2)
+            
+            # If total_amount is too small, consultancy might be negative, handle that
+            if consultancy_cost < 0:
+                consultancy_cost = 0
+
+            mapped_data.update({
+                "financing_information[pv_modules_cost]": f"{pv_cost:.2f}",
+                "financing_information[inverter_cost]": f"{inverter_cost:.2f}",
+                "financing_information[balance_of_system]": f"{bos_cost:.2f}",
+                "financing_information[interconnection_cost]": f"{intercon_cost:.2f}",
+                "financing_information[design_and_consultancy_cost]": f"{consultancy_cost:.2f}",
+                "financing_information[preliminary_cost]": "0.00"
+            })
+            
+            system_details["invoice_amount"] = total_amount
+            system_details["financial_breakdown"] = {
+                "PV (30%)": pv_cost,
+                "Inverter": inverter_cost,
+                "BOS (15%)": bos_cost,
+                "Intercon (15%)": intercon_cost,
+                "Consultancy": consultancy_cost
+            }
+
         return {
             "success": True,
             "mykad": mykad,

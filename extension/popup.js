@@ -142,6 +142,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             previewDiv.innerHTML += detailsHtml;
         }
 
+        if (details && details.financial_breakdown) {
+            let finHtml = `
+                <div style="background: rgba(34,197,94,0.1); border: 1px solid #22c55e; border-radius: 8px; padding: 10px; margin-bottom: 12px;">
+                    <div style="font-weight:700; font-size:12px; color:#15803d; margin-bottom:6px;">FINANCIAL TRACING (RM ${details.invoice_amount})</div>
+            `;
+            Object.entries(details.financial_breakdown).forEach(([label, val]) => {
+                finHtml += `<div class="data-item"><span class="data-label">${label}:</span> <span style="font-weight:bold;">${val.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>`;
+            });
+            finHtml += `</div>`;
+            previewDiv.innerHTML += finHtml;
+        }
+
         previewDiv.innerHTML += '<div style="font-weight:600; margin-bottom:8px; font-size:11px; color:var(--accent)">READY TO MAP TO SEDA:</div>';
         previewDiv.style.display = "block";
 
