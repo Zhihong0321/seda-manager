@@ -37,20 +37,42 @@ async def get_application_by_mykad(mykad: str):
         invoice = cur.fetchone()
         
         package = None
+        panel_qty = 0
+        
         if invoice:
+            # Look for explicit panel_qty first
+            panel_qty = invoice.get("panel_qty") or 0
+            
+            # Fallback: Parse from Invoice Items if qty is still 0
+            if panel_qty == 0:
+                cur.execute("SELECT description FROM invoice_item WHERE linked_invoice = %s OR bubble_id = ANY(%s)", (invoice['bubble_id'], invoice.get('linked_invoice_item', [])))
+                items = cur.fetchall()
+                for item in items:
+                    desc = item.get("description", "")
+                    if desc:
+                        # Search for "18X" or "18 x" or "18 panels"
+                        import re
+                        match = re.search(r'(\d+)\s*[xX]\s*(?:solar|jinko|panel|tiger)', desc, re.IGNORECASE)
+                        if not match:
+                             # Broad match for just "18X" at start of line
+                             match = re.search(r'^(\d+)\s*[xX]', desc)
+                        
+                        if match:
+                            panel_qty = int(match.group(1))
+                            break
+
             # 3. Fetch Linked Package
-            package_id = invoice.get("linked_package") # This usually contains the bubble_id of the package
+            package_id = invoice.get("linked_package")
             if package_id:
                 cur.execute("SELECT * FROM package WHERE bubble_id = %s LIMIT 1", (package_id,))
                 package = cur.fetchone()
+                if panel_qty == 0:
+                    panel_qty = package.get("panel_qty") or 0
 
         cur.close()
         conn.close()
         
         # --- Calculations ---
-        # Panel Quantity logic (Invoice priority, then Package)
-        panel_qty = (invoice.get("panel_qty") if invoice else 0) or (package.get("panel_qty") if package else 0) or 0
-        
         # kWp calculation: qty * 620w / 1000
         kwp = round((panel_qty * 620) / 1000, 4)
         
