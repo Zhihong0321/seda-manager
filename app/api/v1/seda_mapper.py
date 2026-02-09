@@ -93,6 +93,14 @@ async def get_application_by_mykad(mykad: str):
             "installation_type": "Rooftop of Building", 
             "distribution_licence_id": "2", # TNB
             "tariff_category_id": "1" if registration.get("phase_type") == "Single Phase" else "2",
+            # --- Competent Person Defaults ---
+            "engineer_name": "AHMAD FARUOQI BIN IBRAHIM",
+            "engineer_mykad": "880926105147",
+            "engineer_company": "ETERNALGY SDN BHD",
+            "engineer_registration_number": "1523087A",
+            "engineer_cert_no": "PW10701470",
+            "engineer_email": "admin@eternalgy.my",
+            "engineer_phone_number": "0123005479",
         }
 
         # Enrich for the UI display
