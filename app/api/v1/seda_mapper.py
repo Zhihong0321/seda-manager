@@ -6,6 +6,56 @@ import re
 
 router = APIRouter()
 
+def parse_package_description(desc: str):
+    """
+    Extracts hardware details (panels and inverters) from package invoice description.
+    """
+    details = {"panels": [], "inverters": []}
+    if not desc:
+        return details
+        
+    desc = desc.replace('\r', '')
+    
+    # 1. Solar Panels Extraction
+    # Handles (26+1)X, 18X, 137X etc
+    panel_pattern = r'(?:\(?(\d+)\+(\d+)\)?|(\d+))[xX]\s+(Jinko|Astronergy|Solar|Trina)(.*?)(?:\((\d+)W\)|$|\n)'
+    for match in re.finditer(panel_pattern, desc, re.IGNORECASE):
+        qty1, qty2, qty3, brand, model_raw, rating_raw = match.groups()
+        
+        qty = 0
+        if qty3: qty = int(qty3)
+        else: qty = int(qty1 or 0) + int(qty2 or 0)
+        
+        model = model_raw.strip()
+        rating = rating_raw
+        
+        # If rating wasn't in (620W) format, try to find it in the model string
+        if not rating:
+            r_match = re.search(r'(\d+)W', model, re.IGNORECASE)
+            if r_match: rating = r_match.group(1)
+            
+        details["panels"].append({
+            "qty": qty,
+            "brand": brand.strip().upper(),
+            "model": model,
+            "rating": rating
+        })
+
+    # 2. Inverter Extraction
+    # Look for "1X SAJ R6 3-Phase 30KW INVERTER"
+    inv_pattern = r'(\d+)[xX]\s+(SAJ|Huawei|Solis|Growatt|Sungrow)(.*?)\s+(\d+)(?:KW|K|kw)'
+    for match in re.finditer(inv_pattern, desc, re.IGNORECASE):
+        qty, brand, model_raw, rating = match.groups()
+        
+        details["inverters"].append({
+            "qty": int(qty),
+            "brand": brand.strip().upper(),
+            "model": model_raw.strip(),
+            "rating": rating
+        })
+        
+    return details
+
 # Use the credentials provided by the user
 DATABASE_URL = "postgresql://postgres:tkaYtCcfkqfsWKjQguFMqIcANbJNcNZA@shinkansen.proxy.rlwy.net:34999/railway"
 
@@ -76,6 +126,7 @@ async def get_application_by_mykad(mykad: str):
         
         package = None
         panel_qty = 0
+        hardware_details = {"panels": [], "inverters": []}
         
         if invoice:
             # Look for explicit panel_qty first
@@ -105,19 +156,56 @@ async def get_application_by_mykad(mykad: str):
                 package = cur.fetchone()
                 if panel_qty == 0:
                     panel_qty = package.get("panel_qty") or 0
+                
+                # Parse Package Description for hardware details
+                if package and package.get("invoice_desc"):
+                    hardware_details = parse_package_description(package["invoice_desc"])
 
         cur.close()
         conn.close()
         
-        # --- Calculations ---
-        # kWp calculation: qty * 620w / 1000
-        kwp = round((panel_qty * 620) / 1000, 4)
+        # Override panel_qty if parsed from description
+        if not panel_qty and hardware_details["panels"]:
+            panel_qty = hardware_details["panels"][0]["qty"]
         
-        # kWac logic: map same kwp value to kwac field
-        kwac = kwp 
+        # --- Calculations ---
+        # Get capacity per panel (default 620 if not found)
+        panel_cap = 620
+        if hardware_details["panels"] and hardware_details["panels"][0].get("rating"):
+            try:
+                panel_cap = int(hardware_details["panels"][0]["rating"])
+            except:
+                pass
+
+        # kWp calculation: qty * capacity / 1000
+        kwp = round((panel_qty * panel_cap) / 1000, 4)
+        
+        # Calculate total inverter capacity from description
+        total_kwac_parsed = 0
+        if hardware_details["inverters"]:
+            for inv in hardware_details["inverters"]:
+                try:
+                    q = int(inv.get("qty", 1))
+                    r = float(inv.get("rating", 0))
+                    total_kwac_parsed += (q * r)
+                except:
+                    continue
+
+        # STRICT INSTRUCTION: installed capacity kwac = inverter rating (from Package Description)
+        kwac = total_kwac_parsed
+        
+        # Fallback to kwp ONLY if no inverter info exists at all
+        if kwac <= 0:
+            kwac = kwp
+        
+        # Round final value
+        kwac = round(kwac, 4)
+
+
         
         # Annual generation formula: kwp * 30 * 3.4 * 12 / 1000 = x MWh/year
         annual_gen = round((kwp * 30 * 3.4 * 12) / 1000, 2)
+
 
         # Map DB fields to SEDA Portal Input Names (Step 2: Application Details)
         mapped_data = {
@@ -148,12 +236,18 @@ async def get_application_by_mykad(mykad: str):
             "calculated_kwp": kwp,
             "calculated_gen": annual_gen,
             "tnb_account": registration.get("tnb_account_no"),
+            "hardware": hardware_details,  # Pure parsed data
             "module_details": {
-                "brand": "21", # JINKO SOLAR
-                "type": "123", # MONOCRYSTALLINE
-                "model": package.get("package_name") if package else (invoice.get("package_name_snapshot") if invoice else "Jinko Tiger Neo"),
-                "capacity": "620",
+                "brand": hardware_details["panels"][0]["brand"] if hardware_details["panels"] else "JINKO",
+                "model": hardware_details["panels"][0]["model"] if hardware_details["panels"] else "Tiger Neo",
+                "capacity": hardware_details["panels"][0]["rating"] if hardware_details["panels"] and hardware_details["panels"][0].get("rating") else "620",
                 "quantity": panel_qty
+            },
+            "inverter_details": {
+                "brand": hardware_details["inverters"][0]["brand"] if hardware_details["inverters"] else "SAJ",
+                "model": hardware_details["inverters"][0]["model"] if hardware_details["inverters"] else "R6",
+                "capacity": hardware_details["inverters"][0]["rating"] if hardware_details["inverters"] else str(kwp),
+                "quantity": hardware_details["inverters"][0]["qty"] if hardware_details["inverters"] else 1
             }
         }
 

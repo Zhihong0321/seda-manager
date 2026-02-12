@@ -12,14 +12,42 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const stats = fillSedaForm(mapped_to_seda, system_details, admin_defaults);
         sendResponse({ success: true, stats: stats });
     } else if (request.action === "getMyKad") {
-        let mykad = document.getElementById('mykad_passport')?.value;
+        let mykad = null;
+
+        // 1. Primary: Direct input field (Profile Page)
+        mykad = document.getElementById('mykad_passport')?.value;
+
+        // 2. Secondary: Search for text display with context check
         if (!mykad) {
-            const bodyText = document.body.innerText;
-            const icMatch = bodyText.match(/\b\d{12}\b/) || bodyText.match(/\b\d{6}-\d{2}-\d{4}\b/);
-            if (icMatch) {
-                mykad = icMatch[0].replace(/-/g, "");
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+            let node;
+            while (node = walker.nextNode()) {
+                const text = node.textContent.trim();
+                const match = text.match(/\b\d{12}\b/);
+                if (match) {
+                    const ic = match[0];
+                    // Look back at the label or nearby text context
+                    // We check the parent and its sibling or the overall container
+                    const container = node.parentElement?.closest('div, tr, td, .form-group') || node.parentElement;
+                    const contextText = (container?.innerText || "").toLowerCase();
+
+                    // If it's a contact person or engineer, skip it
+                    if (contextText.includes("contact person") || contextText.includes("engineer")) {
+                        continue;
+                    }
+
+                    // If it's explicitly an applicant or MyKad field, we found it!
+                    if (contextText.includes("applicant") || contextText.includes("mykad") || contextText.includes("passport")) {
+                        mykad = ic;
+                        break;
+                    }
+
+                    // Otherwise, keep it as a weak candidate
+                    if (!mykad) mykad = ic;
+                }
             }
         }
+
         sendResponse({ mykad: mykad || null });
     }
     return true;
@@ -55,11 +83,27 @@ function fillSedaForm(data, systemDetails, adminDefaults) {
             if (!row) { addModuleBtn.click(); row = document.querySelector('.module-row'); }
 
             if (row) {
-                const brand = adminDefaults.mod_brand || "21"; // Default Jinko
-                const brandOther = adminDefaults.mod_brand_custom || "";
+                const modData = systemDetails.module_details || {};
+                let brand = "21"; // Default Jinko
+                let brandOther = "";
+                let model = modData.model || "Tiger Neo";
+                let cap = modData.capacity || "620";
+
+                const parsedBrand = (modData.brand || "").toUpperCase();
+                if (parsedBrand.includes("JINKO")) {
+                    brand = "21";
+                } else if (parsedBrand.includes("ASTRONERGY")) {
+                    brand = "51";
+                    brandOther = "ASTRONERGY";
+                } else if (parsedBrand.includes("TRINA")) {
+                    brand = "51";
+                    brandOther = "TRINA SOLAR";
+                } else if (parsedBrand) {
+                    brand = "51";
+                    brandOther = parsedBrand;
+                }
+
                 const type = adminDefaults.mod_type || "123";  // Default Monocrystalline
-                const model = adminDefaults.mod_model || systemDetails.module_details?.model || "Jinko Tiger Neo";
-                const cap = adminDefaults.mod_cap || "620";
 
                 setValue(row.querySelector('select[name$="[equipment_id]"]'), brand);
                 if (brand === "51" && brandOther) {
@@ -85,10 +129,25 @@ function fillSedaForm(data, systemDetails, adminDefaults) {
         if (!invRow) { addInverterBtn.click(); invRow = document.querySelector('.inverter-row'); }
 
         if (invRow) {
-            const iBrand = adminDefaults.inv_brand || "63"; // Default Huawei
-            const iBrandOther = adminDefaults.inv_brand_custom || "";
-            const iModel = adminDefaults.inv_model || "SUN2000-5KTL";
-            const iCap = adminDefaults.inv_cap || "5";
+            const invData = systemDetails.inverter_details || {};
+            let iBrand = "63"; // Default Huawei
+            let iBrandOther = "";
+            let iModel = invData.model || "SUN2000-5KTL";
+            let iCap = invData.capacity || "5";
+
+            const parsedInvBrand = (invData.brand || "").toUpperCase();
+            if (parsedInvBrand.includes("HUAWEI")) {
+                iBrand = "63";
+            } else if (parsedInvBrand.includes("SAJ")) {
+                iBrand = "93";
+                iBrandOther = "SAJ";
+            } else if (parsedInvBrand.includes("SOLIS")) {
+                iBrand = "93";
+                iBrandOther = "SOLIS";
+            } else if (parsedInvBrand) {
+                iBrand = "93";
+                iBrandOther = parsedInvBrand;
+            }
 
             setValue(invRow.querySelector('select[name$="[equipment_id]"]'), iBrand);
             if (iBrand === "93" && iBrandOther) {
@@ -98,7 +157,7 @@ function fillSedaForm(data, systemDetails, adminDefaults) {
 
             setValue(invRow.querySelector('input[name$="[model]"]'), iModel);
             setValue(invRow.querySelector('input[name$="[capacity]"]'), iCap);
-            setValue(invRow.querySelector('input[name$="[count]"]'), "1"); // Usually 1 inverter
+            setValue(invRow.querySelector('input[name$="[count]"]'), invData.quantity || "1");
 
             fieldsFilled += 4;
             applyHighlight(invRow, "blue");
@@ -140,7 +199,7 @@ function fillSedaForm(data, systemDetails, adminDefaults) {
     // 6. Technical Summary & Financing
     const detInp = document.getElementById('plant_deterioration');
     if (detInp) {
-        setValue(detInp, adminDefaults.deterioration || "0.40");
+        setValue(detInp, adminDefaults.deterioration || "0.80");
         fieldsFilled++;
     }
 

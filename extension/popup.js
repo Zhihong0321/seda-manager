@@ -43,9 +43,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('def-inv-cap').value = d.inv_cap || "5";
             document.getElementById('def-cost-ins').value = d.cost_ins || "0";
             document.getElementById('def-cost-om').value = d.cost_om || "0";
+            // New Split Settings
+            document.getElementById('def-split-pv').value = d.split_pv || "30";
+            document.getElementById('def-split-inv').value = d.split_inv || "4500";
+            document.getElementById('def-split-bos').value = d.split_bos || "15";
+            document.getElementById('def-split-intercon').value = d.split_intercon || "15";
+
             document.getElementById('def-geo-lat').value = d.geo_lat || "";
             document.getElementById('def-geo-lng').value = d.geo_lng || "";
-            document.getElementById('def-deterioration').value = d.deterioration || "0.40";
+            document.getElementById('def-deterioration').value = d.deterioration || "0.80";
             document.getElementById('def-fin-model').value = d.fin_model || "1";
 
             toggleCustomFields();
@@ -75,6 +81,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             inv_cap: document.getElementById('def-inv-cap').value,
             cost_ins: document.getElementById('def-cost-ins').value,
             cost_om: document.getElementById('def-cost-om').value,
+            // New Split Settings
+            split_pv: document.getElementById('def-split-pv').value,
+            split_inv: document.getElementById('def-split-inv').value,
+            split_bos: document.getElementById('def-split-bos').value,
+            split_intercon: document.getElementById('def-split-intercon').value,
+
             geo_lat: document.getElementById('def-geo-lat').value,
             geo_lng: document.getElementById('def-geo-lng').value,
             deterioration: document.getElementById('def-deterioration').value,
@@ -105,7 +117,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function autoDetect() {
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            if (tab && tab.url && tab.url.includes("atap.seda.gov.my")) {
+            if (!tab || !tab.url || !tab.url.includes("atap.seda.gov.my")) return;
+
+            const storage = await chrome.storage.local.get(['last_mykad']);
+            const lastMyKad = storage.last_mykad;
+
+            // IS THIS A PROFILE PAGE? (Active detection allowed)
+            if (tab.url.includes("/profiles/")) {
                 const status = await ensureContentScriptReady(tab.id, tab.url);
                 if (!status.ready) return;
 
@@ -114,13 +132,67 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (response && response.mykad) {
                         appIdInput.value = response.mykad;
                         showStatus("Detected MyKad: " + response.mykad, "success");
+                        chrome.storage.local.set({ last_mykad: response.mykad });
+                    } else if (lastMyKad) {
+                        appIdInput.value = lastMyKad;
+                        showStatus("Using last used MyKad: " + lastMyKad, "success");
                     }
                 });
+            }
+            // IS THIS AN APPLICATION PAGE? (Strictly NO active detection, use persistence only)
+            else if (tab.url.includes("/applications/")) {
+                if (lastMyKad) {
+                    appIdInput.value = lastMyKad;
+                    showStatus("Restored MyKad from Profile: " + lastMyKad, "success");
+                } else {
+                    showStatus("Please capture MyKad on Profile page first.", "");
+                }
             }
         } catch (e) { console.error("Auto-detect failed", e); }
     }
 
     autoDetect();
+
+    // --- Financial Recalculation Helper ---
+    function recalculateFinancials(data, settings) {
+        if (!data.system_details || !data.system_details.invoice_amount) return;
+
+        const totalAmount = parseFloat(data.system_details.invoice_amount) || 0;
+        if (totalAmount <= 0) return;
+
+        // Get percentages/values from settings or defaults
+        const pvPct = parseFloat(settings.split_pv) || 30.0;
+        const bosPct = parseFloat(settings.split_bos) || 15.0;
+        const interconPct = parseFloat(settings.split_intercon) || 15.0;
+        const invFixed = parseFloat(settings.split_inv) || 4500.00;
+
+        // Calculate
+        const pvCost = parseFloat((totalAmount * (pvPct / 100)).toFixed(2));
+        const bosCost = parseFloat((totalAmount * (bosPct / 100)).toFixed(2));
+        const interconCost = parseFloat((totalAmount * (interconPct / 100)).toFixed(2));
+        const invCost = invFixed; // Fixed amount
+
+        // Consultancy is remainder
+        const sumKnown = pvCost + bosCost + interconCost + invCost;
+        let consultCost = parseFloat((totalAmount - sumKnown).toFixed(2));
+        if (consultCost < 0) consultCost = 0;
+
+        // Update mapped_to_seda
+        data.mapped_to_seda["financing_information[pv_modules_cost]"] = pvCost.toFixed(2);
+        data.mapped_to_seda["financing_information[inverter_cost]"] = invCost.toFixed(2);
+        data.mapped_to_seda["financing_information[balance_of_system]"] = bosCost.toFixed(2);
+        data.mapped_to_seda["financing_information[interconnection_cost]"] = interconCost.toFixed(2);
+        data.mapped_to_seda["financing_information[design_and_consultancy_cost]"] = consultCost.toFixed(2);
+
+        // Update system_details breakdown for preview
+        data.system_details.financial_breakdown = {
+            [`PV (${pvPct}%)`]: pvCost,
+            "Inverter": invCost,
+            [`BOS (${bosPct}%)`]: bosCost,
+            [`Intercon (${interconPct}%)`]: interconCost,
+            "Consultancy": consultCost
+        };
+    }
 
     // --- Fetch Logic ---
     fetchBtn.addEventListener('click', async () => {
@@ -147,6 +219,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             allResultData = await response.json();
+
+            // Save this MyKad as successfully verified
+            chrome.storage.local.set({ last_mykad: mykad });
+
+            // RECALCULATE FINANCIALS BASED ON LOCAL SETTINGS
+            const settingsRes = await chrome.storage.local.get(['seda_defaults']);
+            const defaults = settingsRes.seda_defaults || {};
+            recalculateFinancials(allResultData, defaults);
 
             showPreview(allResultData.mapped_to_seda, allResultData.system_details);
             showStatus("Data synced from SEDA DB!", "success");
@@ -181,6 +261,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Load custom defaults to merge/override
         const settingsRes = await chrome.storage.local.get(['seda_defaults']);
         const defaults = settingsRes.seda_defaults || {};
+
+        // Ensure financials are fresh based on current settings (in case user changed settings after fetch)
+        recalculateFinancials(allResultData, defaults);
 
         const messageBody = {
             action: "fillForm",
@@ -233,7 +316,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="font-weight:700; font-size:12px; color:#15803d; margin-bottom:6px;">FINANCIAL TRACING (RM ${details.invoice_amount})</div>
             `;
             const breakdown = details.financial_breakdown;
-            finHtml += `<div class="data-item"><span class="data-label">Consultancy:</span> <span style="font-weight:bold;">${breakdown.Consultancy.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>`;
+
+            // Loop through all keys (PV, Inverter, BOS, Intercon, Consultancy)
+            Object.entries(breakdown).forEach(([label, cost]) => {
+                finHtml += `<div class="data-item"><span class="data-label">${label}:</span> <span style="font-weight:bold;">${cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>`;
+            });
+
             finHtml += `</div>`;
             previewDiv.innerHTML += finHtml;
         }
