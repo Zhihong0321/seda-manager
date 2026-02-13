@@ -161,6 +161,15 @@ async def get_application_by_mykad(mykad: str):
                 if package and package.get("invoice_desc"):
                     hardware_details = parse_package_description(package["invoice_desc"])
 
+            # FALLBACK: If hardware details empty (no package or empty desc), try to parse from INVOICE ITEMS
+            if not hardware_details["panels"] and not hardware_details["inverters"]:
+                cur.execute("SELECT description FROM invoice_item WHERE linked_invoice = %s OR bubble_id = ANY(%s)", (invoice['bubble_id'], invoice.get('linked_invoice_item', [])))
+                items = cur.fetchall()
+                # Concatenate all item descriptions to simulate a package description
+                combined_desc = "\n".join([item['description'] for item in items if item.get('description')])
+                if combined_desc:
+                    hardware_details = parse_package_description(combined_desc)
+
         cur.close()
         conn.close()
         
