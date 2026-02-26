@@ -3,6 +3,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
 import re
+from app.wrapper.seda_wrapper import SEDAClient
 
 router = APIRouter()
 
@@ -388,6 +389,89 @@ async def get_recent_registrations(limit: int = Query(50, ge=1, le=100)):
             "success": True,
             "registrations": [{k: str(v) if v is not None else "" for k, v in reg.items()} for reg in registrations]
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/create-profile/{mykad}")
+async def create_profile_from_mykad(mykad: str):
+    """
+    Creates an individual profile on SEDA directly from the mapper's database using the MyKad.
+    """
+    clean_mykad = mykad.replace("-", "").strip()
+    
+    try:
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        cur = conn.cursor()
+        
+        # Fetch SEDA Registration & Customer details
+        cur.execute("""
+            SELECT r.*, c.name as customer_name, c.phone as customer_phone
+            FROM seda_registration r
+            LEFT JOIN customer c ON r.linked_customer = c.customer_id
+            WHERE (r.ic_no IN (%s, %s) OR r.e_contact_mykad IN (%s, %s))
+            ORDER BY r.created_at DESC LIMIT 1
+        """, (clean_mykad, mykad, clean_mykad, mykad))
+        registration = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+        
+        if not registration:
+            raise HTTPException(status_code=404, detail=f"No registration found for MyKad: {mykad}")
+
+        # Parse address
+        raw_address = registration.get("installation_address") or ""
+        lines = [line.strip() for line in re.split(r'[\n\r,]+', raw_address) if line.strip()]
+        
+        # Reconstruct address lines
+        addr1 = lines[0] if len(lines) > 0 else raw_address
+        addr2 = lines[1] if len(lines) > 1 else ""
+        addr3 = lines[2] if len(lines) > 2 else ""
+
+        # Construct ProfileUpdate payload
+        payload = {
+            "salutation": "MR.", # default
+            "name": registration.get("customer_name") or registration.get("e_contact_name") or "UNKNOWN",
+            "citizenship": "Malaysian", # default
+            "ic_number": registration.get("ic_no") or clean_mykad,
+            "email": registration.get("email") or "noreply@eternalgy.my",
+            
+            "address_line_1": addr1[:100] if addr1 else "-",
+            "address_line_2": addr2[:100] if addr2 else "",
+            "address_line_3": addr3[:100] if addr3 else "",
+            "postcode": registration.get("postcode") or "00000",
+            "town": registration.get("city") or "UNKNOWN",
+            "state": (registration.get("state") or "UNKNOWN").upper(),
+            
+            "phone": registration.get("customer_phone") or "",
+            "mobile": registration.get("customer_phone") or "0000000000",
+            
+            "emergency_salutation": "MR.", # default
+            "emergency_name": registration.get("e_contact_name") or "UNKNOWN",
+            "emergency_ic_number": (registration.get("e_contact_mykad") or "000000000000").replace("-", ""),
+            "emergency_citizenship": "Malaysian", # default
+            "emergency_relationship": registration.get("e_contact_relationship") or "Others",
+            "emergency_email": registration.get("e_email") or registration.get("email") or "noreply@eternalgy.my",
+            "emergency_phone": "",
+            "emergency_mobile": registration.get("e_contact_no") or "0000000000"
+        }
+
+        # Use SEDAClient to create
+        client = SEDAClient()
+        result = client.create_individual_profile(payload)
+        
+        if not result.get("success"):
+            raise HTTPException(status_code=400, detail=result.get("error", "Failed to create profile"))
+        
+        return {
+            "success": True,
+            "profile_id": result.get("profile_id"),
+            "message": result.get("message", "Profile created successfully"),
+            "redirect_url": result.get("redirect_url")
+        }
+        
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

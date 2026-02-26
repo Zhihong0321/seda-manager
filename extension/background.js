@@ -11,9 +11,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         }
 
         // Auto-detect login: If they are on any other page on the portal, assume logged in
-        // We will silently get the cookies and send them to the server
         try {
-            const cookies = await chrome.cookies.getAll({ url: "https://atap.seda.gov.my" });
+            const atapCookies = await chrome.cookies.getAll({ domain: "atap.seda.gov.my" });
+            const baseCookies = await chrome.cookies.getAll({ domain: "seda.gov.my" });
+            const cookies = Array.from(new Map([...atapCookies, ...baseCookies].map(c => [c.name, c])).values());
 
             if (cookies.length === 0) {
                 console.log("Auto-Sync: No cookies found for SEDA.");

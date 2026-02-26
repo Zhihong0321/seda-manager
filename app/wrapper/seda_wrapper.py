@@ -44,8 +44,7 @@ class SEDAClient:
             for cookie in cookie_list:
                 self.session.cookies.set(
                     name=cookie['name'], 
-                    value=cookie['value'], 
-                    domain=cookie.get('domain', '')
+                    value=cookie['value']
                 )
             logger.info("Successfully initialized SEDA session from cookies.")
         except Exception as e:

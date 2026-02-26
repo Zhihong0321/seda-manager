@@ -10,7 +10,7 @@
         "cookies"
     ],
     "host_permissions": [
-        "https://atap.seda.gov.my/*",
+        "*://*.seda.gov.my/*",
         "https://seda-manager-production.up.railway.app/*"
     ],
     "action": {

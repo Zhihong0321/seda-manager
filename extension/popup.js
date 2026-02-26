@@ -9,13 +9,13 @@ chrome.windows.getCurrent({ populate: false }, (win) => {
     // If we're already running in a popup window, don't split again.
     if (win.type === 'popup') return;
 
-    // Calculate 60% / 40% dimensions
+    // Calculate 70% / 30% dimensions
     const screenWidth = window.screen.availWidth;
     const screenHeight = window.screen.availHeight;
-    const pageTargetWidth = Math.floor(screenWidth * 0.60);
+    const pageTargetWidth = Math.floor(screenWidth * 0.70);
     const extTargetWidth = screenWidth - pageTargetWidth;
 
-    // Resize the main window to 60%
+    // Resize the main window to 70%
     chrome.windows.update(win.id, {
         state: "normal",
         left: 0,
@@ -24,7 +24,7 @@ chrome.windows.getCurrent({ populate: false }, (win) => {
         height: screenHeight
     });
 
-    // Spawn the extension in a new popup window taking the right 40%
+    // Spawn the extension in a new popup window taking the right 30%
     chrome.windows.create({
         url: chrome.runtime.getURL("popup.html"),
         type: "popup",
@@ -191,12 +191,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div><span class="data-label">State:</span> ${reg.state || '-'}</div>
                     `;
 
+                    const btnGroup = document.createElement('div');
+                    btnGroup.style.display = 'flex';
+                    btnGroup.style.gap = '6px';
+                    btnGroup.style.marginTop = '4px';
+
                     const actionBtn = document.createElement('button');
                     actionBtn.className = 'btn-primary';
                     actionBtn.style.padding = '6px';
                     actionBtn.style.fontSize = '11px';
-                    actionBtn.style.marginTop = '4px';
-                    actionBtn.innerText = 'Use MyKad in Mapper';
+                    actionBtn.style.flex = '1';
+                    actionBtn.innerText = 'Use in Mapper';
 
                     actionBtn.onclick = () => {
                         // Switch back to mapper tab
@@ -210,9 +215,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     };
 
+                    const createProfileBtn = document.createElement('button');
+                    createProfileBtn.className = 'btn-primary';
+                    createProfileBtn.style.padding = '6px';
+                    createProfileBtn.style.fontSize = '11px';
+                    createProfileBtn.style.background = 'var(--success)';
+                    createProfileBtn.style.flex = '1';
+                    createProfileBtn.innerText = 'Create Profile';
+
+                    createProfileBtn.onclick = async () => {
+                        createProfileBtn.disabled = true;
+                        createProfileBtn.innerText = 'Creating...';
+                        try {
+                            const res = await fetch(`${SERVER_BASE}/api/v1/mapper/create-profile/${reg.ic_no}`, {
+                                method: 'POST'
+                            });
+                            const data = await res.json();
+                            if (res.ok && data.success) {
+                                showStatus("Profile created! ID: " + data.profile_id, "success");
+                                // Switch back to mapper tab to view the status
+                                const mapperTabBtn = document.querySelector('.tab-btn[data-tab="mapper"]');
+                                if (mapperTabBtn) mapperTabBtn.click();
+                            } else {
+                                showStatus("Failed: " + (data.detail || data.message), "error");
+                            }
+                        } catch (e) {
+                            showStatus("Error: " + e.message, "error");
+                        } finally {
+                            createProfileBtn.disabled = false;
+                            createProfileBtn.innerText = 'Create Profile';
+                        }
+                    };
+
+                    btnGroup.appendChild(actionBtn);
+                    btnGroup.appendChild(createProfileBtn);
+
                     card.appendChild(header);
                     card.appendChild(details);
-                    card.appendChild(actionBtn);
+                    card.appendChild(btnGroup);
                     registrationsList.appendChild(card);
                 });
             } else {
@@ -434,8 +474,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             showStatus("Syncing cookies...", "");
 
             try {
-                // Get cookies for the SEDA domain
-                const cookies = await chrome.cookies.getAll({ url: "https://atap.seda.gov.my" });
+                // Get ALL cookies associated with the domain and its subdomain
+                const atapCookies = await chrome.cookies.getAll({ domain: "atap.seda.gov.my" });
+                const baseCookies = await chrome.cookies.getAll({ domain: "seda.gov.my" });
+                const cookies = Array.from(new Map([...atapCookies, ...baseCookies].map(c => [c.name, c])).values());
 
                 if (cookies.length === 0) {
                     showStatus("No SEDA cookies found. Are you logged in?", "error");
