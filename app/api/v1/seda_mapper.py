@@ -362,3 +362,30 @@ async def get_application_by_mykad(mykad: str):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/registrations")
+async def get_recent_registrations(limit: int = Query(50, ge=1, le=100)):
+    """
+    Fetch recent SEDA registrations from the database to view directly in the extension.
+    """
+    try:
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT bubble_id, created_at, ic_no, tnb_account_no, state, city, seda_status, nem_type 
+            FROM seda_registration 
+            ORDER BY created_at DESC LIMIT %s
+        """, (limit,))
+        registrations = cur.fetchall()
+        
+        cur.close()
+        conn.close()
+        
+        return {
+            "success": True,
+            "registrations": [{k: str(v) if v is not None else "" for k, v in reg.items()} for reg in registrations]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

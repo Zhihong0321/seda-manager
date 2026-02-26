@@ -24,7 +24,9 @@
             color: var(--text);
             margin: 0;
             padding: 16px;
-            width: 350px;
+            width: 100%;
+            height: 100vh;
+            box-sizing: border-box;
             overflow-x: hidden;
         }
 
@@ -46,6 +48,50 @@
             display: flex;
             align-items: center;
             gap: 12px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .led {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #ef4444;
+            /* red by default */
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+            transition: all 0.3s ease;
+            cursor: help;
+        }
+
+        .led.synced {
+            background-color: #22c55e;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
+        }
+
+        .led.checking {
+            background-color: #f59e0b;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+                transform: scale(0.9);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+
+            100% {
+                opacity: 0.6;
+                transform: scale(0.9);
+            }
         }
 
         .logo {
@@ -254,10 +300,14 @@
                 <div class="logo">S</div>
                 <h1>SEDA Mapper</h1>
             </div>
+            <div class="header-right">
+                <div id="cookie-led" class="led" title="Cookie Status: Unknown"></div>
+            </div>
         </header>
 
         <div class="tabs">
             <button class="tab-btn active" data-tab="mapper">MAPPER</button>
+            <button class="tab-btn" data-tab="registrations">DATABASE</button>
             <button class="tab-btn" data-tab="settings">DEFAULTS</button>
         </div>
 
@@ -277,6 +327,28 @@
             <button id="fill-btn" class="btn-primary" disabled>
                 <span>Map & Fill SEDA Form</span>
             </button>
+            <button id="sync-cookie-btn" class="btn-primary" style="background:var(--secondary); margin-top:8px;">
+                <span>Sync Login Session (Cookie)</span>
+            </button>
+        </div>
+
+        <!-- TAB: DATABASE (REGISTRATIONS) -->
+        <div id="registrations-tab" class="tab-content">
+            <div class="settings-header" style="justify-content: space-between;">
+                <div><span style="font-size:16px;">📋</span> SEDA REGISTRATIONS</div>
+                <button id="refresh-regs-btn" class="btn-primary"
+                    style="background:var(--secondary); padding: 6px 12px; font-size: 11px; width: auto;">
+                    <span>🔄 Refresh</span>
+                </button>
+            </div>
+
+            <div id="registrations-list"
+                style="display:flex; flex-direction:column; gap:8px; max-height:400px; overflow-y:auto; padding-right:4px;">
+                <div
+                    style="text-align:center; padding: 20px; color: var(--text-dim); background: var(--card); border-radius: 8px; border: 1px dashed #ffffff1a;">
+                    Click Refresh to load database...
+                </div>
+            </div>
         </div>
 
         <!-- TAB: SETTINGS (ADMIN) -->

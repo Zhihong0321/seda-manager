@@ -4,6 +4,40 @@
 
 const SERVER_BASE = "https://seda-manager-production.up.railway.app";
 
+// --- Auto-Split Screen Logic ---
+chrome.windows.getCurrent({ populate: false }, (win) => {
+    // If we're already running in a popup window, don't split again.
+    if (win.type === 'popup') return;
+
+    // Calculate 60% / 40% dimensions
+    const screenWidth = window.screen.availWidth;
+    const screenHeight = window.screen.availHeight;
+    const pageTargetWidth = Math.floor(screenWidth * 0.60);
+    const extTargetWidth = screenWidth - pageTargetWidth;
+
+    // Resize the main window to 60%
+    chrome.windows.update(win.id, {
+        state: "normal",
+        left: 0,
+        top: 0,
+        width: pageTargetWidth,
+        height: screenHeight
+    });
+
+    // Spawn the extension in a new popup window taking the right 40%
+    chrome.windows.create({
+        url: chrome.runtime.getURL("popup.html"),
+        type: "popup",
+        left: pageTargetWidth,
+        top: 0,
+        width: extTargetWidth,
+        height: screenHeight
+    });
+
+    // Close this initial small popup
+    window.close();
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
     const fetchBtn = document.getElementById('fetch-btn');
     const fillBtn = document.getElementById('fill-btn');
@@ -98,6 +132,101 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     saveSettingsBtn.addEventListener('click', saveSettings);
     loadSettings();
+
+    // --- Database Tab Logic ---
+    const refreshRegsBtn = document.getElementById('refresh-regs-btn');
+    const registrationsList = document.getElementById('registrations-list');
+
+    async function loadRegistrations() {
+        if (!refreshRegsBtn || !registrationsList) return;
+
+        refreshRegsBtn.disabled = true;
+        registrationsList.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--accent);">Fetching from API...</div>';
+
+        try {
+            const url = `${SERVER_BASE}/api/v1/mapper/registrations?limit=50`;
+            const response = await fetch(url, { method: 'GET', mode: 'cors' });
+
+            if (!response.ok) throw new Error("Failed to fetch registrations");
+            const data = await response.json();
+
+            registrationsList.innerHTML = '';
+
+            if (data.registrations && data.registrations.length > 0) {
+                data.registrations.forEach(reg => {
+                    const card = document.createElement('div');
+                    card.style.background = 'var(--card)';
+                    card.style.borderRadius = '8px';
+                    card.style.padding = '10px';
+                    card.style.border = '1px solid #ffffff1a';
+                    card.style.display = 'flex';
+                    card.style.flexDirection = 'column';
+                    card.style.gap = '6px';
+
+                    const dt = new Date(reg.created_at);
+                    const dateStr = !isNaN(dt) ? dt.toLocaleDateString() : '';
+
+                    const header = document.createElement('div');
+                    header.style.display = 'flex';
+                    header.style.justifyContent = 'space-between';
+                    header.style.fontWeight = 'bold';
+                    header.style.fontSize = '12px';
+                    header.innerHTML = `<span style="color:var(--primary)">${reg.bubble_id || '-'}</span><span style="font-size:10px; color:var(--text-dim)">${dateStr}</span>`;
+
+                    const details = document.createElement('div');
+                    details.style.fontSize = '11px';
+                    details.innerHTML = `
+                        <div><span class="data-label">MyKad:</span> <span style="font-weight:bold">${reg.ic_no || '-'}</span></div>
+                        <div><span class="data-label">TNB:</span> ${reg.tnb_account_no || '-'}</div>
+                        <div><span class="data-label">State:</span> ${reg.state || '-'}</div>
+                    `;
+
+                    const actionBtn = document.createElement('button');
+                    actionBtn.className = 'btn-primary';
+                    actionBtn.style.padding = '6px';
+                    actionBtn.style.fontSize = '11px';
+                    actionBtn.style.marginTop = '4px';
+                    actionBtn.innerText = 'Use MyKad in Mapper';
+
+                    actionBtn.onclick = () => {
+                        // Switch back to mapper tab
+                        const mapperTabBtn = document.querySelector('.tab-btn[data-tab="mapper"]');
+                        if (mapperTabBtn) mapperTabBtn.click();
+
+                        if (appIdInput) {
+                            appIdInput.value = reg.ic_no;
+                            showStatus("MyKad set to: " + reg.ic_no, "success");
+                            if (fetchBtn) fetchBtn.click();
+                        }
+                    };
+
+                    card.appendChild(header);
+                    card.appendChild(details);
+                    card.appendChild(actionBtn);
+                    registrationsList.appendChild(card);
+                });
+            } else {
+                registrationsList.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-dim);">No recent registrations found</div>';
+            }
+        } catch (e) {
+            registrationsList.innerHTML = `<div style="text-align:center; padding: 20px; color: #ef4444;">Error: ${e.message}</div>`;
+        } finally {
+            refreshRegsBtn.disabled = false;
+        }
+    }
+
+    if (refreshRegsBtn) {
+        refreshRegsBtn.addEventListener('click', loadRegistrations);
+    }
+
+    const dbTabBtn = document.querySelector('.tab-btn[data-tab="registrations"]');
+    if (dbTabBtn) {
+        dbTabBtn.addEventListener('click', () => {
+            if (registrationsList && registrationsList.innerHTML.includes('Click Refresh')) {
+                loadRegistrations();
+            }
+        });
+    }
 
     // --- Helper to check if content script is ready ---
     async function ensureContentScriptReady(tabId, url) {
@@ -286,6 +415,110 @@ document.addEventListener('DOMContentLoaded', async () => {
             fillBtn.disabled = false;
         });
     });
+
+    // --- Cookie Sync Logic ---
+    const syncCookieBtn = document.getElementById('sync-cookie-btn');
+    if (syncCookieBtn) {
+        syncCookieBtn.addEventListener('click', async () => {
+            syncCookieBtn.disabled = true;
+            showStatus("Syncing cookies...", "");
+
+            try {
+                // Get cookies for the SEDA domain
+                const cookies = await chrome.cookies.getAll({ url: "https://atap.seda.gov.my" });
+
+                if (cookies.length === 0) {
+                    showStatus("No SEDA cookies found. Are you logged in?", "error");
+                    syncCookieBtn.disabled = false;
+                    return;
+                }
+
+                showStatus(`Sending ${cookies.length} cookies to server...`, "");
+
+                const response = await fetch(`${SERVER_BASE}/api/v1/system/update-cookies`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(cookies)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success && data.valid) {
+                    showStatus("Session synced successfully!", "success");
+                    // Update LED directly
+                    const led = document.getElementById('cookie-led');
+                    if (led) {
+                        led.className = 'led synced';
+                        led.title = 'Cookies Synced with Server';
+                    }
+                } else if (data.success && !data.valid) {
+                    showStatus(data.message, "error");
+                } else {
+                    throw new Error(data.message || "Failed to sync");
+                }
+            } catch (err) {
+                console.error("Cookie sync failed:", err);
+                showStatus(`Sync failed: ${err.message}`, "error");
+            } finally {
+                syncCookieBtn.disabled = false;
+            }
+        });
+    }
+
+    // --- Auto-detect Background Status Check ---
+    async function checkServerStatus() {
+        const led = document.getElementById('cookie-led');
+        if (led) {
+            led.className = 'led checking';
+            led.title = 'Checking server status...';
+        }
+
+        try {
+            const response = await fetch(`${SERVER_BASE}/api/v1/system/status`);
+            if (response.ok) {
+                const data = await response.json();
+                const isHealthy = data.checks && data.checks.seda_session && data.checks.seda_session.status === 'healthy';
+
+                if (isHealthy) {
+                    if (led) {
+                        led.className = 'led synced';
+                        led.title = 'Cookies Synced with Server';
+                    }
+                } else {
+                    if (led) {
+                        led.className = 'led';
+                        led.title = 'Cookies Not Synced!';
+                    }
+                    if (syncCookieBtn) {
+                        const statusText = document.createElement('div');
+                        statusText.style.fontSize = '10px';
+                        statusText.style.color = '#ef4444';
+                        statusText.style.marginTop = '4px';
+                        statusText.innerText = "Server needs active SEDA session! Please Sync.";
+                        syncCookieBtn.parentNode.insertBefore(statusText, syncCookieBtn.nextSibling);
+                    }
+                }
+            } else {
+                if (led) {
+                    led.className = 'led';
+                    led.title = 'Server Error!';
+                }
+            }
+        } catch (e) {
+            console.warn("Failed to check server status natively");
+            if (led) {
+                led.className = 'led';
+                led.title = 'Cannot connect to server';
+            }
+        }
+    }
+    checkServerStatus();
 
     function showStatus(msg, type) {
         statusDiv.textContent = msg;
