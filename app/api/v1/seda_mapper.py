@@ -376,7 +376,7 @@ async def get_recent_registrations(limit: int = Query(50, ge=1, le=100)):
             SELECT r.bubble_id, r.created_at, r.ic_no, r.tnb_account_no, r.state, r.city, r.seda_status, r.nem_type, c.name as customer_name
             FROM seda_registration r
             LEFT JOIN customer c ON r.linked_customer = c.customer_id
-            WHERE r.mapper_status = 'Ready in Mapper' AND COALESCE(r.seda_status, '') <> 'Approved'
+            WHERE LOWER(r.mapper_status) = 'ready in mapper' AND LOWER(COALESCE(r.seda_status, '')) <> 'approved'
             ORDER BY r.created_at DESC LIMIT %s
         """, (limit,))
         registrations = cur.fetchall()

@@ -13,7 +13,7 @@ COOKIES_FILE = "cookies.json"
 COOKIES_PATH = os.path.join(STORAGE_DIR, COOKIES_FILE)
 
 SEDA_BASE_URL = "https://atap.seda.gov.my"
-USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 # Database Configuration
 DATABASE_URL = os.getenv("DATABASE_URL") # Provided by Railway
