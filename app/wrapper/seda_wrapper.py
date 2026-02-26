@@ -222,9 +222,10 @@ class SEDAClient:
     def create_individual_profile(self, data: Dict) -> Dict:
         """Creates a new individual profile."""
         url = f"{SEDA_BASE_URL}/profiles/individuals"
+        form_url = f"{SEDA_BASE_URL}/profiles/individuals/create"
         
         try:
-            token = self._fetch_csrf_token(url)
+            token = self._fetch_csrf_token(form_url)
             
             # Replicate browser behavior: Double CSRF token (Laravel pattern)
             payload = [
@@ -237,36 +238,10 @@ class SEDAClient:
             
             logger.debug(f"Final SEDA Payload: {payload}")
             logger.info(f"Submitting new individual profile for: {data.get('name')}")
-            # allow_redirects=False so we can see the exact redirect
-            response = self.session.post(url, data=payload, headers={'Referer': url}, allow_redirects=True)
+            # allow_redirects=True so we can see the exact redirect
+            response = self.session.post(url, data=payload, headers={'Referer': form_url}, allow_redirects=True)
             
-            # Success check 1: Redirected to list or LANDED on list?
-            # On success, SEDA redirects to /profiles/individuals
-            target_name = data.get('name', '').strip().upper()
-            
-            if response.url.endswith('/profiles/individuals') or target_name in response.text.upper():
-                # Try to find ID in the current response (it might be the list already)
-                match = re.search(fr'href="[^"]*/profiles/individuals/(\d+)/edit"[^>]*>\s*{re.escape(target_name)}', response.text, re.IGNORECASE)
-                profile_id = match.group(1) if match else None
-                
-                # If not found on the immediate page, check the first 2 pages of the list
-                if not profile_id:
-                    for page in [1, 2]:
-                        list_page = self.session.get(f"{SEDA_BASE_URL}/profiles/individuals?page={page}")
-                        match = re.search(fr'href="[^"]*/profiles/individuals/(\d+)/edit"[^>]*>\s*{re.escape(target_name)}', list_page.text, re.IGNORECASE)
-                        if match:
-                            profile_id = match.group(1)
-                            break
-                
-                logger.info(f"Profile creation confirmed for {target_name} (ID: {profile_id})")
-                return {
-                    "success": True,
-                    "profile_id": profile_id,
-                    "redirect_url": response.url,
-                    "message": "Profile created successfully."
-                }
-            
-            # Search for ANY kind of error message (Flash, Toastr, etc.)
+            # Check for validation errors first
             error_msgs = []
             # 1. Laravel Validation Errors
             error_msgs.extend(re.findall(r'<span class="invalid-feedback" role="alert">[\s\S]*?<strong>(.*?)</strong>', response.text))
@@ -281,6 +256,40 @@ class SEDAClient:
             if error_msgs:
                 clean_errors = [re.sub(r'<[^>]+>', '', e).strip() for e in error_msgs]
                 return {"success": False, "error": f"Portal Error: {', '.join(set(clean_errors))}"}
+                
+            # If we were redirected back to the create page, it failed validation
+            if response.url.rstrip('/').endswith('/profiles/individuals/create'):
+                return {"success": False, "error": "Validation failed on SEDA portal (check required fields or duplicates)."}
+
+            # Success check: Redirected to list or LANDED on list?
+            # On success, SEDA redirects to /profiles/individuals
+            target_name = data.get('name', '').strip().upper()
+            
+            if response.url.rstrip('/').endswith('/profiles/individuals') or target_name in response.text.upper():
+                # Try to find ID in the current response (it might be the list already)
+                match = re.search(fr'href="[^"]*/profiles/individuals/(\d+)/edit"[^>]*>\s*{re.escape(target_name)}', response.text, re.IGNORECASE)
+                profile_id = match.group(1) if match else None
+                
+                # If not found on the immediate page, check the first 2 pages of the list
+                if not profile_id:
+                    for page in [1, 2]:
+                        list_page = self.session.get(f"{SEDA_BASE_URL}/profiles/individuals?page={page}")
+                        match = re.search(fr'href="[^"]*/profiles/individuals/(\d+)/edit"[^>]*>\s*{re.escape(target_name)}', list_page.text, re.IGNORECASE)
+                        if match:
+                            profile_id = match.group(1)
+                            break
+                            
+                if not profile_id:
+                    # Created, but we couldn't scrape the ID
+                    return {"success": False, "error": f"Profile submitted, but failed to retrieve ID for {target_name}. It may have failed silently."}
+                
+                logger.info(f"Profile creation confirmed for {target_name} (ID: {profile_id})")
+                return {
+                    "success": True,
+                    "profile_id": profile_id,
+                    "redirect_url": response.url,
+                    "message": "Profile created successfully."
+                }
             
             return {
                 "success": False, 
