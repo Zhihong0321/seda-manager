@@ -171,7 +171,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     header.style.justifyContent = 'space-between';
                     header.style.fontWeight = 'bold';
                     header.style.fontSize = '12px';
-                    header.innerHTML = `<span style="color:var(--primary)">${reg.bubble_id || '-'}</span><span style="font-size:10px; color:var(--text-dim)">${dateStr}</span>`;
+
+                    const titleName = reg.customer_name || reg.bubble_id || 'Unknown Customer';
+                    const dbIdHtml = reg.bubble_id ? `<span style="font-size:9px; color:var(--text-dim); display:block; font-weight:normal;">ID: ${reg.bubble_id}</span>` : '';
+
+                    header.innerHTML = `
+                        <div>
+                            <span style="color:var(--primary); font-size:13px;">${titleName}</span>
+                            ${dbIdHtml}
+                        </div>
+                        <span style="font-size:10px; color:var(--text-dim); white-space: nowrap;">${dateStr}</span>
+                    `;
 
                     const details = document.createElement('div');
                     details.style.fontSize = '11px';

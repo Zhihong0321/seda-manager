@@ -373,9 +373,10 @@ async def get_recent_registrations(limit: int = Query(50, ge=1, le=100)):
         cur = conn.cursor()
         
         cur.execute("""
-            SELECT bubble_id, created_at, ic_no, tnb_account_no, state, city, seda_status, nem_type 
-            FROM seda_registration 
-            ORDER BY created_at DESC LIMIT %s
+            SELECT r.bubble_id, r.created_at, r.ic_no, r.tnb_account_no, r.state, r.city, r.seda_status, r.nem_type, c.name as customer_name
+            FROM seda_registration r
+            LEFT JOIN customer c ON r.linked_customer = c.customer_id
+            ORDER BY r.created_at DESC LIMIT %s
         """, (limit,))
         registrations = cur.fetchall()
         
