@@ -314,3 +314,121 @@ function applyHighlight(el, color) {
     el.style.outline = `2px solid ${color === 'green' ? '#22C55E' : (color === 'purple' ? '#9333ea' : '#38BDF8')}`;
     setTimeout(() => { el.style.backgroundColor = ""; el.style.outline = ""; }, 4000);
 }
+
+// --- Inject Mapper Check Buttons in Profiles List ---
+function injectProfileListButtons() {
+    // Only run on the list page
+    if (!window.location.href.includes('/profiles') || window.location.href.includes('/create') || window.location.href.includes('/edit')) {
+        return;
+    }
+
+    // Find all table rows
+    const rows = document.querySelectorAll('tr');
+
+    rows.forEach(row => {
+        // Skip if we already injected the button
+        if (row.querySelector('.seda-mapper-check-btn')) return;
+
+        // Find the "New Application" button usually in the last col
+        const interactables = row.querySelectorAll('a, button');
+        let newAppBtn = null;
+        for (let el of interactables) {
+            if (el.textContent && (el.textContent.includes('New Application') || el.innerText.includes('New Application'))) {
+                newAppBtn = el;
+                break;
+            }
+        }
+
+        if (!newAppBtn) return;
+
+        // Extract registration number (MyKad is ~12 digits)
+        const rowText = row.innerText || row.textContent;
+        const icMatch = rowText.match(/\b\d{12}\b/);
+        let regNoText = icMatch ? icMatch[0] : "";
+
+        if (!regNoText) {
+            // Fallback: look at column 3 text
+            const cols = row.querySelectorAll('td');
+            if (cols.length >= 3) {
+                regNoText = cols[2].textContent.trim();
+            }
+            if (!regNoText) return;
+        }
+
+        // Create the Check Button
+        const checkBtn = document.createElement('button');
+        checkBtn.className = 'btn btn-sm seda-mapper-check-btn';
+        checkBtn.style.marginLeft = '8px';
+        checkBtn.style.padding = '5px 10px';
+        checkBtn.style.fontSize = '12px';
+        checkBtn.style.fontWeight = 'bold';
+        checkBtn.style.backgroundColor = '#FF8C00';
+        checkBtn.style.color = '#fff';
+        checkBtn.style.border = '1px solid #e07b00';
+        checkBtn.style.borderRadius = '4px';
+        checkBtn.style.cursor = 'pointer';
+        checkBtn.style.display = 'inline-flex';
+        checkBtn.style.alignItems = 'center';
+        checkBtn.innerHTML = '&#128269; Check DB';
+        checkBtn.title = 'Check SEDA Manager Database for ' + regNoText;
+
+        // Insert next to the "New Application" button
+        if (newAppBtn.parentNode) {
+            newAppBtn.parentNode.insertBefore(checkBtn, newAppBtn.nextSibling);
+
+            // Adjust parent display if needed to ensure they line up perfectly
+            newAppBtn.parentNode.style.display = 'flex';
+            newAppBtn.parentNode.style.gap = '5px';
+            newAppBtn.parentNode.style.alignItems = 'center';
+        }
+
+        checkBtn.onclick = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const originalText = checkBtn.innerHTML;
+            checkBtn.innerHTML = '&#8987; Checking...';
+            checkBtn.disabled = true;
+
+            try {
+                // Fetch from our local backend
+                const url = `https://seda-manager-production.up.railway.app/api/v1/mapper/by-mykad/${regNoText}`;
+                const response = await fetch(url, { method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' } });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.success) {
+                        checkBtn.innerHTML = '&#9989; Found!';
+                        checkBtn.style.backgroundColor = '#22C55E';
+                        checkBtn.style.border = '1px solid #16a34a';
+
+                        // Wait a sec before clicking New Application automatically
+                        setTimeout(() => {
+                            newAppBtn.click();
+                        }, 500);
+                        return; // Exit
+                    }
+                }
+
+                // If not found or API failed
+                throw new Error("Not found");
+            } catch (err) {
+                console.error("SEDA Mapper: IC check failed:", err);
+                checkBtn.innerHTML = '&#10060; Not Found';
+                checkBtn.style.backgroundColor = '#ef4444';
+                checkBtn.style.border = '1px solid #dc2626';
+
+                // Reset button after 3 seconds so they can try again if they want
+                setTimeout(() => {
+                    checkBtn.disabled = false;
+                    checkBtn.innerHTML = '&#128269; Check DB';
+                    checkBtn.style.backgroundColor = '#FF8C00';
+                    checkBtn.style.border = '1px solid #e07b00';
+                }, 3000);
+            }
+        };
+    });
+}
+
+// Repeatedly try to inject, just in case the table handles dynamic AJAX pagination or Vue rendering
+setInterval(injectProfileListButtons, 1500);

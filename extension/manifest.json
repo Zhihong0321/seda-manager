@@ -23,7 +23,7 @@
         {
             "matches": [
                 "https://atap.seda.gov.my/applications/*",
-                "https://atap.seda.gov.my/profiles/*"
+                "https://atap.seda.gov.my/profiles*"
             ],
             "js": [
                 "content.js"
