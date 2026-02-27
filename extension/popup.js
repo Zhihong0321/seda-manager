@@ -225,25 +225,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     createProfileBtn.onclick = async () => {
                         createProfileBtn.disabled = true;
-                        createProfileBtn.innerText = 'Creating...';
+                        createProfileBtn.innerText = 'Opening...';
                         try {
-                            const res = await fetch(`${SERVER_BASE}/api/v1/mapper/create-profile/${reg.ic_no}`, {
-                                method: 'POST'
-                            });
+                            const res = await fetch(`${SERVER_BASE}/api/v1/mapper/profile-payload/${reg.ic_no}`);
                             const data = await res.json();
                             if (res.ok && data.success) {
-                                showStatus("Profile created! ID: " + data.profile_id, "success");
-                                // Switch back to mapper tab to view the status
-                                const mapperTabBtn = document.querySelector('.tab-btn[data-tab="mapper"]');
-                                if (mapperTabBtn) mapperTabBtn.click();
+                                await chrome.storage.local.set({
+                                    auto_profile_flag: true,
+                                    auto_profile_data: data.payload
+                                });
+                                chrome.tabs.create({ url: "https://atap.seda.gov.my/profiles/individuals" });
+                                showStatus("Opening profile creation page...", "success");
                             } else {
-                                showStatus("Failed: " + (data.detail || data.message), "error");
+                                showStatus("Failed to get profile data: " + (data.detail || data.message), "error");
                             }
                         } catch (e) {
                             showStatus("Error: " + e.message, "error");
                         } finally {
                             createProfileBtn.disabled = false;
-                            createProfileBtn.innerText = 'Create Profile';
+                            createProfileBtn.innerText = 'Auto Create Profile';
                         }
                     };
 

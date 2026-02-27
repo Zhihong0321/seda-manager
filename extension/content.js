@@ -4,6 +4,54 @@
 
 console.log("SEDA Mapper: Content script active.");
 
+// --- Auto-fill Individual Profile on load ---
+chrome.storage.local.get(['auto_profile_flag', 'auto_profile_data'], (res) => {
+    if (res.auto_profile_flag && res.auto_profile_data && window.location.href.includes("profiles/individuals")) {
+        // Clear flag immediately to prevent repeat execution on refresh
+        chrome.storage.local.set({ auto_profile_flag: false });
+
+        const mapping = {
+            'salutation': 'salutation',
+            'name': 'name',
+            'citizenship': 'citizenship',
+            'ic_number': 'mykad_passport',
+            'email': 'email',
+            'address_line_1': 'address_line_1',
+            'address_line_2': 'address_line_2',
+            'address_line_3': 'address_line_3',
+            'postcode': 'postcode',
+            'town': 'town',
+            'state': 'state',
+            'phone': 'phone',
+            'mobile': 'mobile',
+            'emergency_salutation': 'contact_salutation',
+            'emergency_name': 'contact_name',
+            'emergency_ic_number': 'contact_mykad_passport',
+            'emergency_citizenship': 'contact_citizenship',
+            'emergency_relationship': 'contact_relationship',
+            'emergency_email': 'contact_email',
+            'emergency_phone': 'contact_phone',
+            'emergency_mobile': 'contact_mobile'
+        };
+
+        // Wait a brief moment to ensure dynamic framework rendering is complete
+        setTimeout(() => {
+            let filled = 0;
+            const payload = res.auto_profile_data;
+            for (const [cleanKey, htmlName] of Object.entries(mapping)) {
+                if (payload[cleanKey]) {
+                    const el = document.getElementById(htmlName) || document.querySelector(`[name="${htmlName}"]`);
+                    if (el) {
+                        setValue(el, payload[cleanKey]);
+                        filled++;
+                    }
+                }
+            }
+            console.log("SEDA Mapper: Auto-filled " + filled + " individual profile fields from payload.");
+        }, 1500);
+    }
+});
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "ping") {
         sendResponse({ success: true });

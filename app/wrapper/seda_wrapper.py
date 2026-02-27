@@ -236,10 +236,30 @@ class SEDAClient:
             # 1. Map API data to SEDA fields
             payload.extend(self._map_profile_data(data))
             
-            logger.debug(f"Final SEDA Payload: {payload}")
-            logger.info(f"Submitting new individual profile for: {data.get('name')}")
+            # SEDA's WAF (Cloudflare/Imperva) often blocks raw POST requests that lack comprehensive
+            # browser headers, resulting in ConnectionResetError(10054). We inject full headers.
+            headers = {
+                'Host': 'atap.seda.gov.my',
+                'Connection': 'keep-alive',
+                'Cache-Control': 'max-age=0',
+                'sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'Upgrade-Insecure-Requests': '1',
+                'Origin': SEDA_BASE_URL,
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'User-Agent': self.session.headers.get('User-Agent', USER_AGENT),
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Sec-Fetch-Site': 'same-origin',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-User': '?1',
+                'Sec-Fetch-Dest': 'document',
+                'Referer': form_url,
+                'Accept-Encoding': 'gzip, deflate, br, zstd',
+                'Accept-Language': 'en-US,en;q=0.9',
+            }
             # allow_redirects=True so we can see the exact redirect
-            response = self.session.post(url, data=payload, headers={'Referer': form_url}, allow_redirects=True)
+            response = self.session.post(url, data=payload, headers=headers, allow_redirects=True)
             
             # Check for validation errors first
             error_msgs = []
