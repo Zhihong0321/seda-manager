@@ -433,7 +433,7 @@ async def create_profile_from_mykad(mykad: str):
             "salutation": "MR.", # default
             "name": registration.get("customer_name") or registration.get("e_contact_name") or "UNKNOWN",
             "citizenship": "Malaysian", # default
-            "ic_number": registration.get("ic_no") or clean_mykad,
+            "ic_number": (str(registration.get("ic_no") or "") or clean_mykad).replace("-", ""),
             "email": registration.get("email") or "noreply@eternalgy.my",
             
             "address_line_1": addr1[:100] if addr1 else "-",
@@ -515,7 +515,7 @@ async def get_profile_payload(mykad: str):
             "salutation": "MR.", # default
             "name": registration.get("customer_name") or registration.get("e_contact_name") or "UNKNOWN",
             "citizenship": "Malaysian", # default
-            "ic_number": registration.get("ic_no") or clean_mykad,
+            "ic_number": (str(registration.get("ic_no") or "") or clean_mykad).replace("-", ""),
             "email": registration.get("email") or "noreply@eternalgy.my",
             
             "address_line_1": addr1[:100] if addr1 else "-",

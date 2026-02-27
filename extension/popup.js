@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     createProfileBtn.style.fontSize = '11px';
                     createProfileBtn.style.background = 'var(--success)';
                     createProfileBtn.style.flex = '1';
-                    createProfileBtn.innerText = 'Create Profile';
+                    createProfileBtn.innerText = 'Auto Create Profile';
 
                     createProfileBtn.onclick = async () => {
                         createProfileBtn.disabled = true;
