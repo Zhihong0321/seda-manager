@@ -50,6 +50,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let allResultData = null;
 
+    // Listen for extension messages
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.action === "mapperAutoLoad") {
+            // Switch to Mapper tab if not active
+            const mapperTabBtn = document.querySelector('.tab-btn[data-tab="mapper"]');
+            if (mapperTabBtn) mapperTabBtn.click();
+
+            appIdInput.value = request.mykad;
+            fetchBtn.click();
+            sendResponse({ received: true });
+        }
+    });
+
     // --- Tab Switching ---
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -323,6 +336,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (lastMyKad) {
                     appIdInput.value = lastMyKad;
                     showStatus("Restored MyKad from Profile: " + lastMyKad, "success");
+                    if (storage.auto_fetch) {
+                        chrome.storage.local.set({ auto_fetch: false });
+                        setTimeout(() => fetchBtn.click(), 500);
+                    }
                 } else {
                     showStatus("Please capture MyKad on Profile page first.", "");
                 }

@@ -402,6 +402,11 @@ function injectProfileListButtons() {
                         checkBtn.style.backgroundColor = '#22C55E';
                         checkBtn.style.border = '1px solid #16a34a';
 
+                        // Tell the popup (if open) to load this IC and fetch API
+                        chrome.runtime.sendMessage({ action: "mapperAutoLoad", mykad: regNoText }).catch(() => { });
+                        // Also store it so if the popup isn't open but opens later, it will fetch
+                        chrome.storage.local.set({ last_mykad: regNoText, auto_fetch: true });
+
                         // Wait a sec before clicking New Application automatically
                         setTimeout(() => {
                             newAppBtn.click();
