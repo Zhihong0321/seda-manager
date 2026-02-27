@@ -5,6 +5,7 @@
     "description": "Fills SEDA application forms using data from your local system.",
     "permissions": [
         "activeTab",
+        "tabs",
         "scripting",
         "storage",
         "cookies"
