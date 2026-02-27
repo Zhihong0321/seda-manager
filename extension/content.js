@@ -4,6 +4,25 @@
 
 console.log("SEDA Mapper: Content script active.");
 
+// --- Auto-fill Complete Application Form on load ---
+chrome.storage.local.get(['auto_app_flag', 'auto_app_data', 'seda_defaults'], (res) => {
+    if (res.auto_app_flag && res.auto_app_data && window.location.href.includes("applications/")) {
+        // Clear flag immediately to prevent repeat execution on refresh
+        chrome.storage.local.set({ auto_app_flag: false });
+
+        const data = res.auto_app_data;
+        const defaults = res.seda_defaults || {};
+
+        // Wait a brief moment to ensure dynamic framework rendering is complete
+        setTimeout(() => {
+            console.log("SEDA Mapper: Auto-filling NEW application directly from memory payload...", data);
+            const stats = fillSedaForm(data.mapped_to_seda, data.system_details, defaults);
+            console.log(`SEDA Mapper: Instantly filled ${stats.filled} fields without Popup.`);
+        }, 1500);
+    }
+});
+
+
 // --- Auto-fill Individual Profile on load ---
 chrome.storage.local.get(['auto_profile_flag', 'auto_profile_data'], (res) => {
     if (res.auto_profile_flag && res.auto_profile_data && window.location.href.includes("profiles/individuals")) {
@@ -402,10 +421,12 @@ function injectProfileListButtons() {
                         checkBtn.style.backgroundColor = '#22C55E';
                         checkBtn.style.border = '1px solid #16a34a';
 
-                        // Tell the popup (if open) to load this IC and fetch API
-                        chrome.runtime.sendMessage({ action: "mapperAutoLoad", mykad: regNoText }).catch(() => { });
-                        // Also store it so if the popup isn't open but opens later, it will fetch
-                        chrome.storage.local.set({ last_mykad: regNoText, auto_fetch: true });
+                        // Completely bypass popup dependency, store directly to memory
+                        chrome.storage.local.set({
+                            last_mykad: regNoText,
+                            auto_app_flag: true,
+                            auto_app_data: data
+                        });
 
                         // Wait a sec before clicking New Application automatically
                         setTimeout(() => {
