@@ -76,19 +76,19 @@ async def get_application_by_mykad(mykad: str):
         # Strategy: Look for the latest registration that actually HAS a TNB account number first
         cur.execute("""
             SELECT * FROM seda_registration 
-            WHERE (ic_no IN (%s, %s) OR e_contact_mykad IN (%s, %s))
+            WHERE (REPLACE(ic_no, '-', '') = %s OR REPLACE(e_contact_mykad, '-', '') = %s)
             AND tnb_account_no IS NOT NULL AND tnb_account_no != ''
             ORDER BY created_at DESC LIMIT 1
-        """, (clean_mykad, mykad, clean_mykad, mykad))
+        """, (clean_mykad, clean_mykad))
         registration = cur.fetchone()
         
         # Fallback 1: Just get the latest record if no TNB account found above
         if not registration or not registration.get("tnb_account_no"):
             cur.execute("""
                 SELECT * FROM seda_registration 
-                WHERE ic_no IN (%s, %s) OR e_contact_mykad IN (%s, %s)
+                WHERE REPLACE(ic_no, '-', '') = %s OR REPLACE(e_contact_mykad, '-', '') = %s
                 ORDER BY created_at DESC LIMIT 1
-            """, (clean_mykad, mykad, clean_mykad, mykad))
+            """, (clean_mykad, clean_mykad))
             registration = cur.fetchone()
 
         # Fallback 2: If we have a record but NO TNB, search for OTHER registrations linked to the same customer
@@ -408,9 +408,9 @@ async def create_profile_from_mykad(mykad: str):
             SELECT r.*, c.name as customer_name, c.phone as customer_phone
             FROM seda_registration r
             LEFT JOIN customer c ON r.linked_customer = c.customer_id
-            WHERE (r.ic_no IN (%s, %s) OR r.e_contact_mykad IN (%s, %s))
+            WHERE (REPLACE(r.ic_no, '-', '') = %s OR REPLACE(r.e_contact_mykad, '-', '') = %s)
             ORDER BY r.created_at DESC LIMIT 1
-        """, (clean_mykad, mykad, clean_mykad, mykad))
+        """, (clean_mykad, clean_mykad))
         registration = cur.fetchone()
         
         cur.close()
@@ -491,9 +491,9 @@ async def get_profile_payload(mykad: str):
             SELECT r.*, c.name as customer_name, c.phone as customer_phone
             FROM seda_registration r
             LEFT JOIN customer c ON r.linked_customer = c.customer_id
-            WHERE (r.ic_no IN (%s, %s) OR r.e_contact_mykad IN (%s, %s))
+            WHERE (REPLACE(r.ic_no, '-', '') = %s OR REPLACE(r.e_contact_mykad, '-', '') = %s)
             ORDER BY r.created_at DESC LIMIT 1
-        """, (clean_mykad, mykad, clean_mykad, mykad))
+        """, (clean_mykad, clean_mykad))
         registration = cur.fetchone()
         
         cur.close()
