@@ -1,9 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import os
 import re
 from app.wrapper.seda_wrapper import SEDAClient
+from app.core.config import get_db_connection
 
 router = APIRouter()
 
@@ -57,8 +55,6 @@ def parse_package_description(desc: str):
         
     return details
 
-# Use the credentials provided by the user
-DATABASE_URL = "postgresql://postgres:tkaYtCcfkqfsWKjQguFMqIcANbJNcNZA@shinkansen.proxy.rlwy.net:34999/railway"
 
 @router.get("/by-mykad/{mykad}")
 async def get_application_by_mykad(mykad: str):
@@ -69,7 +65,7 @@ async def get_application_by_mykad(mykad: str):
     clean_mykad = mykad.replace("-", "").strip()
     
     try:
-        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        conn = get_db_connection()
         cur = conn.cursor()
         
         # 1. Fetch SEDA Registration
@@ -370,7 +366,7 @@ async def get_recent_registrations(limit: int = Query(50, ge=1, le=100)):
     Fetch recent SEDA registrations from the database to view directly in the extension.
     """
     try:
-        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        conn = get_db_connection()
         cur = conn.cursor()
         
         cur.execute("""
@@ -400,7 +396,7 @@ async def create_profile_from_mykad(mykad: str):
     clean_mykad = mykad.replace("-", "").strip()
     
     try:
-        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        conn = get_db_connection()
         cur = conn.cursor()
         
         # Fetch SEDA Registration & Customer details
@@ -483,7 +479,7 @@ async def get_profile_payload(mykad: str):
     clean_mykad = mykad.replace("-", "").strip()
     
     try:
-        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        conn = get_db_connection()
         cur = conn.cursor()
         
         # Fetch SEDA Registration & Customer details

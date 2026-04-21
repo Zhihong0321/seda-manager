@@ -15,9 +15,6 @@ COOKIES_PATH = os.path.join(STORAGE_DIR, COOKIES_FILE)
 SEDA_BASE_URL = "https://atap.seda.gov.my"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-# Database Configuration
-DATABASE_URL = os.getenv("DATABASE_URL") # Provided by Railway
-
 # Ensure storage exists
 if not os.path.exists(STORAGE_DIR):
     os.makedirs(STORAGE_DIR, exist_ok=True)
@@ -88,9 +85,11 @@ logger = logging.getLogger("eATAP")
 
 def get_db_connection():
     """Returns a connection to the PostgreSQL database."""
-    if not DATABASE_URL:
+    database_url = os.getenv("DATABASE_URL")
+
+    if not database_url:
         logger.error("DATABASE_URL environment variable is not set.")
         raise ConnectionError("Database connection string missing.")
     
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
     return conn
